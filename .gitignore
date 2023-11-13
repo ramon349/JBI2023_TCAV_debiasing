@@ -3,7 +3,6 @@
 logs 
 datasets/
 model_checkpoints/
-results/
 
 #file extensions 
 *.db 
