@@ -6,7 +6,7 @@
  - Enviroment was developed using python3 3.9 and CUDA 12.2
 
 # Preparing datasets 
- -  The code expect's you define a pytorch dataset  that is able to load 1 image at a time
+ -  The code expects you define a pytorch dataset  that is able to load 1 image at a time
  - In our workflows we usually provide a csv file that contains image paths,labels , train/test grouping and other metdata 
  -  if working on your own imaging modality create a new {modality}_factor.py where you define data  loaders 
  -  Each factory.py has a get_loaders method that is used to load specific dataloaders. 
