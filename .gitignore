@@ -1,0 +1,13 @@
+#known directories i will create 
+*__pycache__
+logs 
+datasets/
+model_checkpoints/
+results/
+
+#file extensions 
+*.db 
+*.png 
+*.csv 
+#Folders produced by cav. might be problematic in future
+cav*
