@@ -16,6 +16,7 @@
 "img_shape1":224,
 "img_shape2":224,
 "epochs":20,
+"batch_size":28,
 "train_transforms":["resize","tensor","norm","horizontal","affine","ColorJitter"],
 "test_transforms":["resize", "tensor","norm"],
 "norm_mu":[0.485, 0.456, 0.406],
@@ -30,7 +31,12 @@
 "brightness":[0.8,1.2],
 "train_mode":"debias" ,
 "task":"debias",
+"num_trials":10,
 "study_name":"debias_param_search",
-"freeze_layer":"",
-"num_trials":10
+"freeze_layer":"model.features.denseblock3.denselayer16.conv2",
+"optim":"AdamW",
+"scheduler":"StepLR",
+"factor":2,
+"patience":8,
+"lr":0.0033687093872954584
 }

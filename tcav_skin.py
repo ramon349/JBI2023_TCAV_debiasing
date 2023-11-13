@@ -105,15 +105,7 @@ def main():
                                             internal_batch_size=8,
                                             n_steps=20,
                                         )
-    acc_scores,layer_names =  get_accuracy_scores(mytcav) 
     layer_names = [".".join(e.split('.')[-2: ]) for e in layer_names]
-    fig = plt.figure(dpi=300)
-    plt.plot(np.hstack(acc_scores)) 
-    plt.xticks(range(0,len(acc_scores)),layer_names,rotation=90)
-    plt.ylabel('TCAV Accuracy')
-    plt.title('TCAV plot Densenet fitzpatrick classification Accuracy')
-    plt.tight_layout()
-    plt.savefig('./results/figures/tcav_accuracy.png')
     tcav_scores,layer_names = get_tcav_scores(tcav_scores_w_random)
     fig = plt.figure(dpi=300)
     plt.plot(np.hstack(tcav_scores),range(0,len(tcav_scores))) 

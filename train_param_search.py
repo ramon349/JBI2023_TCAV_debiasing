@@ -63,7 +63,6 @@ def return_on_fail(val="hello"):
             except RuntimeError as e:
                 print('We had a runtime oopsie')
                 print(e.__cause__)
-                pdb.set_trace()
                 raise optuna.exceptions.TrialPruned()       
         return applicator
     return decorate
@@ -75,12 +74,8 @@ def main(config:dict,trial):
     task = config['task']
     model_name = exp_config["model_name"]
     #TODO: why is img_shape not used here 
-    img_shape = (exp_config["img_shape1"], exp_config["img_shape2"])
     cuda_num1 = int(exp_config["cuda_num1"])
     cuda_num2 = int(exp_config["cuda_num2"]) 
-    task_classes = exp_config["task_num_classes"]
-    if task =='debias': 
-        demo_classes = exp_config["demo_num_classes"]
     epochs = exp_config["epochs"] 
     (best_epoch, best_loss) = (-1, 999999999)  # sentinel values for training
     # establish which model transforms i'll be using 
@@ -89,7 +84,6 @@ def main(config:dict,trial):
     (train_loader, test_loader, val_loader) = build_loaders(exp_config)
     DEVICE = torch.device(f"cuda:{cuda_num1}" if torch.cuda.is_available() else "cpu")
     # Set up my model
-    demo_criterion = None # set it to none for useful purposes 
     print(model_name)
     if task =="debias": 
         exp_config['lambda'] = trial.suggest_float('lambda',0.01,1)
@@ -147,7 +141,6 @@ def main(config:dict,trial):
             if  trial.should_prune():
                 raise optuna.exceptions.TrialPruned()
         if (epoch - best_epoch) >= 10:
-            print("NO IMPROVEMENTS WEA RE DONE")
             break 
     if task =='debias':
         return (train_d['task_loss'],train_d['adv_loss'])

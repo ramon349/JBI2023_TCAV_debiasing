@@ -7,7 +7,6 @@ results/
 
 #file extensions 
 *.db 
-*.png 
 *.csv 
 #Folders produced by cav. might be problematic in future
 cav*

@@ -39,6 +39,20 @@ bash ./scripts/step1_run_best_models.sh
  - We should get an image simlar to:
  ![image info](./results/figures/tcav_score.png)
  - From those results our "debiasing" taret will be 
- - "features.denseblock3.denselayer16.conv2"
+ - "model.features.denseblock3.denselayer16.conv2"
+   - NOTE: We add the "model" because our debias training uses module that wraps around the network so 
+   - features.denseblock becomes model.features.denseblock
 # Grid search for adversarial Debiasing
+ - configs/skin_configs/param_searches/param_search_debias.json should have the same parameters as the baseline network training configs/skin_configs/train_skin.json. we will only search over possible lambda values. 
+ - leaving out batch_size and optimizer will result  varying optimal configurations. Resulting in unfair comparisons. 
+ ```bash 
+ bash scripts/step3_run_debias_param_search.sh
+ ```
+ - The notebook can be used to view the best parameters. notebooks/view_optuna_dashboard.ipynb  
+
+ # Run and evaluate the final model 
+ - Once your hyper paramters are update run 
+ ```bash   
+ bash scripts/step4_run_debi
+ ``` 
  
