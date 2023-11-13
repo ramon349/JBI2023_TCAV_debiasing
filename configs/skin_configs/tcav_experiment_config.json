@@ -1,0 +1,12 @@
+{
+"train_transforms":["tensor","typeConv","resize","norm"],
+"test_transforms":["tensor","typeConv","resize","norm"] ,
+"norm_mu":[0.485, 0.456, 0.406],
+"norm_std":[0.229, 0.224, 0.225],
+"img_shape1":224,
+"img_shape2":224,
+"samples_per_concept":20,
+"layer_category":"conv",
+"data_path":"./datasets/fitzpatrick_benign_vs_malign.csv",
+"weight_path":"./model_checkpoints/exp_densenet_224_fitzpatrickMalignancyClassification/version_2/model_w.ckpt"
+}
