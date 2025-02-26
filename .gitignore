@@ -9,3 +9,5 @@ model_checkpoints/
 *.csv 
 #Folders produced by cav. might be problematic in future
 cav*
+
+jbi.egg-info/

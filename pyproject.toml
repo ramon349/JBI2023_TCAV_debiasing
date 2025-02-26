@@ -22,6 +22,7 @@ dependencies = [
 "torchvision==0.20.1",
 "wheel==0.44.0",
 "scikit-image==0.24.0",
-"tensorboard==2.18.0"
+"tensorboard==2.18.0",
+"captum"
 
 ]
