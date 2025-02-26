@@ -17,6 +17,8 @@ from  ..helpers.helpers import proc_inference
 @TrainerRegister.register(cls_name="ErmTrainer")
 class BasicTrainer(object): 
     def __init__(self,model: nn.Module,tb_writter:SummaryWriter,conf:Dict,data_loaders:Dict) -> None:
+        """ Specifies a trainer object for doing simple supervised training. 
+        """
         self.model = model 
         self.tb: SummaryWriter = tb_writter
         self.conf = conf
@@ -71,7 +73,6 @@ class BasicTrainer(object):
         w_path = os.path.join(model_dir, "model_w.ckpt")
         model_w = torch.load(w_path,map_location=self.device) 
         self.model.load_state_dict(model_w['model_weights'])
-
 
     def init_optims(self):
         learn_rate = self.trainer_args['learn_rate']
