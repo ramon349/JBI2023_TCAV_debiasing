@@ -15,7 +15,7 @@ python3 -m pip install -e .
 # Preparing datasets 
  - I define a class to load Image Date under  datasets/image_data.py 
  - it is able to load png/jpg images supported by PIL 
- - it expects you provide a jbi/config file with the following information 
+ - it expects you provide a config file with the following information 
     - data_path: absolute path to csv file 
     - inside the csf file you should define a split colum for train/val/test 
     - col_info has additional metadata 
@@ -27,7 +27,7 @@ python3 -m pip install -e .
 # Training Baseline Model 
 -  To train your own baseline mdoel you can use the jbi/config file in "./jbi/config/train_base" 
 ```bash 
-    python3 -m jbi.train --jbi/config_path jbi/config/train_base.json
+    python3 -m jbi.train --config_path jbi/config/train_base.json
 ```
 - NOTE: some paths are hardcoded you will need to change those 
 - Bellow I will annotate the same jbi/config file with comments off what section does 
@@ -68,17 +68,17 @@ python3 -m pip install -e .
     - jbi/config/train_two_task.json
     - follows the same logic as the single task model 
 ```bash 
-    python3 -m jbi.train --jbi/config_path jbi/config/train_two_task.json
+    python3 -m jbi.train --config_path jbi/config/train_two_task.json
 ```
 # TCAV 
 ```bash 
-    python3 -m jbi.train --jbi/config_path jbi/config/tcav_explore.json
+    python3 -m jbi.train --config_path jbi/config/tcav_explore.json
 ```
 #  Observing TCAV in model layers 
  - modify jbi/config/tcav_explore.json  to point at your data and your model weights 
  - Run the Following  script: 
  ```bash
- python3 -m jbi.tcav --jbi/config_path ./jbi/config/tcav_explore.json
+ python3 -m jbi.tcav --config_path ./jbi/config/tcav_explore.json
  ``` 
  - We should get an image simlar to:
  ![image info](jbi/results/figures/TACV_score.png)
@@ -92,7 +92,7 @@ python3 -m pip install -e .
         lambda in trainer_args 
         adv_delay in trainer_args
  ```bash
- python3 -m jbi.train --jbi/config_path ./jbi/config/train_adv_tcav.json 
+ python3 -m jbi.train --config_path ./jbi/config/train_adv_tcav.json 
  ```
 
 # Other Modifications 
