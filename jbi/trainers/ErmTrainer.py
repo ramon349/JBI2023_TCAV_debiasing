@@ -124,7 +124,7 @@ class BasicTrainer(object):
             self._log_scalar("val_task_loss", task_loss, global_step=self.c_epoch)
         return task_loss
 
-    def test_model(self, dl, batch_save):
+    def test_model(self, dl):
         self.model.eval()
         with torch.no_grad():
             ground_truths = defaultdict(list)
