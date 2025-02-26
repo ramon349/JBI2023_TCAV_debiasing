@@ -29,7 +29,6 @@ python3 -m pip install -e .
 ```bash 
     python3 -m jbi.train --jbi/config_path jbi/config/train_base.json
 ```
-<<<<<<< HEAD
 - NOTE: some paths are hardcoded you will need to change those 
 - Bellow I will annotate the same jbi/config file with comments off what section does 
     - csv_path : Absolute path to csv file specifying your dataset 
@@ -82,7 +81,7 @@ python3 -m pip install -e .
  python3 -m jbi.tcav --jbi/config_path ./jbi/config/tcav_explore.json
  ``` 
  - We should get an image simlar to:
- ![image info](./jbi/results/figures/tcav_score.png)
+ ![image info](jbi/results/figures/TACV_score.png)
  - From those results our "debiasing" target will be 
  - "model.features.denseblock3.denselayer16.conv2"
 
