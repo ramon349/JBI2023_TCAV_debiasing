@@ -1,0 +1,27 @@
+[project]
+name = "jbi"  # Replace with your package name
+version = "0.1.0"  # Replace with your package version
+readme = "README.md" 
+authors = [
+  {name = "Ramon Correa-Medero", email = "correa.ramon14@gmail.com" }
+] 
+maintainers = [
+  {name = "Ramon Correa-Medero", email = "correa.ramon14@egmail.com" }
+]
+
+requires-python = '>=3.10'
+
+dependencies = [
+"numpy==1.26.3",
+"pillow==10.2.0",
+"pip==24.3.1",
+"setuptools==75.1.0",
+"sympy==1.13.1",
+"torch==2.5.1",
+"torchaudio==2.5.1",
+"torchvision==0.20.1",
+"wheel==0.44.0",
+"scikit-image==0.24.0",
+"tensorboard==2.18.0"
+
+]

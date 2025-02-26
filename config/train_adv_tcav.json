@@ -1,0 +1,39 @@
+{
+    "csv_path":"/home/ramon/jbi_2024/datasets/fitz_dataset.csv",
+    "num_workers":16,
+    "device":["cuda:3"],
+    "batch_size":8,
+    "dataset":"TwoTask",
+    "model":"DensenetTwoTaskAdv",
+    "trainer":"TCAVDebias",
+    "train_transforms":["toTensor","resize","ColorJitter","norm","horizontal","affine"],
+    "test_transforms":["toTensor","resize","ColorJitter","norm","horizontal","affine"],
+    "model_weight":"/home/ramon/jbi_2024/model_logs/two_task/model_w.ckpt",
+    "transform_conf":{
+        "norm_mu":[ 0.485, 0.456, 0.406],
+        "norm_std":[0.229, 0.224, 0.225],
+        "brightness":[0.8,1.2],
+        "saturation":[0.8,1.1],
+        "contrast":[0.8,1.2],
+        "img_shape":[224,224]
+   },
+    "col_info":{
+        "img_col":"file",
+        "task_col":"partition_cat",
+        "demo_col":"discrete_fitz" 
+    },
+    "trainer_args":{
+        "epochs":10,
+        "grad_step":1,
+        "learn_rate":0.01,
+        "lambda":0.5,
+        "adv_delay":0,
+        "layer_debias":"features.denseblock3.denselayer16.conv2"
+    },
+    "model_parameters":{
+        "num_task":3,
+        "num_demo":2
+    },
+    "splits":["train","test","val"],
+    "log_dir": "/home/ramon/jbi_2024/model_logs/two_task_adv_TCAV"
+    }

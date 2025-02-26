@@ -1,0 +1,33 @@
+{
+    "csv_path":"/home/ramon/jbi_2024/datasets/fitz_dataset.csv",
+    "num_workers":16,
+    "device":["cuda:3"],
+    "batch_size":8,
+    "dataset":"ImageData",
+    "model":"densenet121",
+    "trainer":"ErmTrainer",
+    "train_transforms":["toTensor","resize","ColorJitter","norm","horizontal","affine"],
+    "test_transforms":["toTensor","resize","ColorJitter","norm","horizontal","affine"],
+    "transform_conf":{
+        "norm_mu":[ 0.485, 0.456, 0.406],
+        "norm_std":[0.229, 0.224, 0.225],
+        "brightness":[0.8,1.2],
+        "saturation":[0.8,1.1],
+        "contrast":[0.8,1.2],
+        "img_shape":[224,224]
+   },
+    "col_info":{
+        "img_col":"file",
+        "task_col":"partition_cat"
+    },
+    "trainer_args":{
+        "epochs":30,
+        "grad_step":4,
+        "learn_rate":0.01
+    },
+    "model_parameters":{
+        "num_task":3
+    },
+    "splits":["train","test","val"],
+    "log_dir": "/home/ramon/jbi_2024/model_logs/"
+    }
