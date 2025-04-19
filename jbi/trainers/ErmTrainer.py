@@ -13,12 +13,11 @@ from .trainer_factory import TrainerRegister
 import os 
 from ..models.model_factory import remove_module
 from  ..helpers.helpers import proc_inference
+from sklearn.metrics import balanced_accuracy_score 
 
 @TrainerRegister.register(cls_name="ErmTrainer")
 class BasicTrainer(object): 
     def __init__(self,model: nn.Module,tb_writter:SummaryWriter,conf:Dict,data_loaders:Dict) -> None:
-        """ Specifies a trainer object for doing simple supervised training. 
-        """
         self.model = model 
         self.tb: SummaryWriter = tb_writter
         self.conf = conf
@@ -36,6 +35,10 @@ class BasicTrainer(object):
         self.grad_step = self.trainer_args["grad_step"]
         self.val_eval_step = 1
         self.early_stop = 5
+        self._suppres_tqdm = False 
+        self.compile_model()
+    def compile_model(self): 
+        pass 
     def fit(self): 
         num_epochs = self.total_epochs 
         best_val_loss = 90000 
@@ -74,6 +77,7 @@ class BasicTrainer(object):
         model_w = torch.load(w_path,map_location=self.device) 
         self.model.load_state_dict(model_w['model_weights'])
 
+
     def init_optims(self):
         learn_rate = self.trainer_args['learn_rate']
         self.opti = optim.AdamW([e for e in self.model.parameters() if e.requires_grad],lr=learn_rate)
@@ -82,10 +86,11 @@ class BasicTrainer(object):
         ) 
     def build_criteria(self): 
         self.criterions = dict()
-        get_incidence = ("weight_task" in self.conf) and self.conf["weight_tasks"]
+        get_incidence = ("weight_task" in self.conf) and self.conf["weight_task"]
         if get_incidence:
+            print('We are doing the task weighting')
             ws = self.dls["train"].dataset.get_inverse_weight('task')
-            weight = torch.tensor(ws)
+            weight = torch.tensor(ws,dtype=torch.float)
         else:
             weight = None
         self.criterions["task"] = nn.CrossEntropyLoss(weight=weight) 
@@ -103,7 +108,7 @@ class BasicTrainer(object):
             loss  = self.criterions["task"](task_h, task)
             loss.backward()
             if (
-                i % grad_step == 0
+                (i % grad_step) == 0
             ):  # do an update every two steps instead of every to accum
                 self.opti.step()
             self._log_scalar("batch_task_loss", loss, global_step=self.gb_step)
@@ -123,14 +128,15 @@ class BasicTrainer(object):
             task_loss /= val_len
             self._log_scalar("val_task_loss", task_loss, global_step=self.c_epoch)
         return task_loss
-
+    def _set_supress_tqdm(self,val): 
+        self._suppres_tqdm = val
     def test_model(self, dl):
         self.model.eval()
         with torch.no_grad():
             ground_truths = defaultdict(list)
             preds = defaultdict(list)
             all_paths = list()
-            for i, batch in tqdm(enumerate(dl), total=len(dl)):
+            for i, batch in tqdm(enumerate(dl), total=len(dl),disable=self._suppres_tqdm):
                 (img_in, task,img_path) = (
                     batch  
                 )
@@ -149,6 +155,13 @@ class BasicTrainer(object):
         ret_df = proc_inference(ground_truths, preds)
         ret_df['paths'] = all_paths
         return ret_df
+    def _test_acc(self): 
+        self._set_supress_tqdm(True)
+        pred_df = self.test_model(self.dls['test'])
+        model_preds = pred_df[[e for e in pred_df if e.startswith('task_p')]].values.argmax(axis=1)
+        acc = balanced_accuracy_score(pred_df['task_t'],model_preds)
+        return acc
+
 
 
 @TrainerRegister.register(cls_name="TwoTaskTrainer")
@@ -158,16 +171,16 @@ class TwoTaskTrainer(BasicTrainer):
     
     def build_criteria(self): 
         self.criterions = dict()
-        get_task_incidence = ("weight_task" in self.conf) and self.conf["weight_task"]
-        get_demo_incidence = ("weight_demo" in self.conf) and self.conf["weight_demo"] 
+        get_task_incidence = ("weight_task" in self.trainer_args) and self.trainer_args["weight_task"]
+        get_demo_incidence = ("weight_demo" in self.trainer_args) and self.trainer_args["weight_demo"] 
         if  get_task_incidence:
             ws = self.dls["train"].dataset.get_inverse_weight('task')
-            task_weight = torch.tensor(ws)
+            task_weight = torch.tensor(ws,device=self.device,dtype=torch.float)
         else:
             task_weight = None
         if get_demo_incidence: 
             ws = self.dls["train"].dataset.get_inverse_weight('demo')
-            demo_weight = torch.tensor(ws)
+            demo_weight = torch.tensor(ws,device=self.device,dtype=torch.float)
         else:
             demo_weight = None
         self.criterions["task"] = nn.CrossEntropyLoss(weight=task_weight) 
@@ -184,7 +197,7 @@ class TwoTaskTrainer(BasicTrainer):
             demo = demo.to(self.device)
             task_h,demo_h = self.model(img_in.to(self.device))
             task_loss  = self.criterions["task"](task_h, task)
-            demo_loss = self.criterions['demo'](task_h,demo) 
+            demo_loss = self.criterions['demo'](demo_h,demo) 
             loss = task_loss  + demo_loss
             loss.backward()
             if (
@@ -243,3 +256,30 @@ class TwoTaskTrainer(BasicTrainer):
         ret_df = proc_inference(ground_truths, preds)
         ret_df['paths'] = all_paths
         return ret_df
+    def _test_acc(self): 
+        self._set_supress_tqdm(True)
+        pred_df = self.test_model(self.dls['test'])
+        task_model_preds = pred_df[[e for e in pred_df if e.startswith('task_p')]].values.argmax(axis=1)
+        task_acc = balanced_accuracy_score(pred_df['task_t'],task_model_preds)
+        demo_model_preds = pred_df[[e for e in pred_df if e.startswith('demo_p')]].values.argmax(axis=1)
+        demo_acc = balanced_accuracy_score(pred_df['demo_t'],demo_model_preds)
+        return task_acc,demo_acc
+
+@TrainerRegister.register(cls_name="TwoTaskTrainerAux")
+class TwoTaskTrainerAux(TwoTaskTrainer): 
+    def __init__(self, model, tb_writter, conf, data_loaders):
+        super().__init__(model, tb_writter, conf, data_loaders)
+    def init_optims(self):
+        learn_rate = self.trainer_args['learn_rate']
+        final_params =  list()
+        names = list() 
+        for layer_name,param in self.model.named_parameters(): 
+            if 'demo' in layer_name: 
+                final_params.append(param)
+                names.append(layer_name)
+            else: 
+                param.requires_grad=False 
+        self.opti = optim.AdamW(final_params,lr=learn_rate)
+        self.sch = optim.lr_scheduler.ReduceLROnPlateau(
+            self.opti, mode="min", patience=3
+        )

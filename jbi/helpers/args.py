@@ -41,7 +41,7 @@ def get_data_choices():
 def get_model_choices():
     return ModelRegister.get_models()
 def build_train_args():
-    """Parses args used for training models
+    """Parses args
     """
     parser = argparse.ArgumentParser(
         description="Confguration for my deep learning model training for segmentation"
@@ -80,11 +80,10 @@ def build_train_args():
     parser.add_argument("--model_parameters",type=json.loads,required=True)
     parser.add_argument("--debug",type=parse_bool,required=False)
     parser.add_argument("--model_weight",type=str,required=False)
+    parser.add_argument("--weight_task",required=False,default=False,type=parse_bool)
     return parser
 
 def build_tcav_args(): 
-    """Parses args used for running TCAV experiments 
-    """
     parser = argparse.ArgumentParser(
         description="Confguration for my deep learning model training for segmentation"
     )

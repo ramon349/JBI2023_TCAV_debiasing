@@ -29,14 +29,19 @@ class Densenet121TwoBranch(DenseNet):
         growth_rate= 32 
         block_config = (6, 12, 24, 16)
         num_init_features= 64 
-        weights = DenseNet121_Weights .IMAGENET1K_V1
         super().__init__(growth_rate=growth_rate,block_config=block_config,num_init_features=num_init_features)
+        weights = DenseNet121_Weights .IMAGENET1K_V1 
         _load_state_dict(model=self,weights=weights,progress=True)
     def __init__(self, config): 
-        self._call_init()  
-        self.add_demo_classifier(config['num_demo'])
+        weight = None 
+        if 'base_weight' in config: 
+            weight = torch.load(config['base_weight'],map_location='cpu')['model_weights']
+        self._call_init() 
+        self.add_demo_classifier(config['num_demo']) 
         self.mod_classifier(config['num_task'])
-
+        if weight: 
+            print(f"Loading baseline weight")
+            self.load_state_dict(weight,strict=False) 
     def add_demo_classifier(self,num_demo): 
         in_features = self.classifier.in_features
         self.demo_classifier = nn.Linear(in_features,num_demo)
@@ -59,7 +64,19 @@ class Densenet121TwoBranch(DenseNet):
         if task =='task': 
             task_out = self.classifier(features)
             return task_out
-        
+@ModelRegister.register("DensenetTwoTaskAux")
+class Densenet121TwoBranchAux(Densenet121TwoBranch): 
+    def __init__(self, config):
+        super().__init__(config)
+    def train(self, mode = True):
+        for e in self.features.modules(): 
+            if isinstance(e,nn.BatchNorm2d):
+                e.track_running_stats =False
+            e.eval()
+        for e in self.classifier.modules(): 
+            e.eval()
+        for e in self.features.modules(): 
+            e.train(mode=mode)
 @ModelRegister.register("DensenetTwoTaskAdv")
 class Densenet121Adv(Densenet121TwoBranch): 
     def __init__(self, config):
@@ -80,7 +97,6 @@ class Densenet121Adv(Densenet121TwoBranch):
     def _reversal_layer(self,x):
         #doing this so we can also have the confusion lsos version be very similar
         return grad_reverse(x)
-
 @ModelRegister.register("DensenetTwoTaskConf")
 class Densenet121Conf(Densenet121Adv): 
     def __init__(self, config):
