@@ -12,16 +12,15 @@ maintainers = [
 requires-python = '>=3.10'
 
 dependencies = [
-"numpy==1.26.3",
-"pillow==10.2.0",
-"pip==24.3.1",
-"setuptools==75.1.0",
-"sympy==1.13.1",
-"torch==2.5.1",
-"torchaudio==2.5.1",
-"torchvision==0.20.1",
-"wheel==0.44.0",
-"scikit-image==0.24.0",
-"tensorboard==2.18.0"
-
+"numpy==1.26.4",
+"pillow==11.3.0",
+"pip==25.2",
+"setuptools==80.9.0",
+"sympy==1.14.0",
+"torch==2.8.0",
+"torchcam==0.4.0",
+"wheel==0.45.1",
+"torchvision==0.23.0",
+"scikit-learn==1.7.1",
+"optuna==4.5.0"
 ]
