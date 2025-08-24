@@ -24,6 +24,20 @@ python3 -m pip install -e .
 - For debiasing experiments, we require a task variable and a demographic variable 
 - The TwoTask datasets will do precisely that by adding a "demo_col" that works the same way as task_Col  
 
+# Download the fitz17k dataset 
+- NOTICE: On the asu server there are 
+```bash
+python3 -m jbi.exp_setup.skin_cancer.skin_cancer_utils --mode download_fitz --output_csv /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv --local_csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitzpatrick17k.csv
+```
+# Hyper Parameters for Baseline Model 
+```bash 
+python3 -m jbi.exp_setup.skin_cancer.baseline.make_baseline_optim --csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv \
+--config_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/configs/optims/baseline \
+--optuna_log_dir /home/ramon/optuna_logs/baseline
+```
+- NOTE: For some reason optuna hs an issue writitng its log.db file to certain network drive. Therefore it's suggested you use local storage or another file type? 
+
+
 # Training Baseline Model 
 -  To train your own baseline mdoel you can use the jbi/config file in "./jbi/config/train_base" 
 ```bash 

@@ -1,0 +1,64 @@
+import pandas as pd 
+from sklearn.model_selection import train_test_split
+import os 
+from argparse import ArgumentParser
+
+def _make_args(): 
+    args = ArgumentParser() 
+    args.add_argument("--mode",type=str,required=True,choices=['download_fitz'])
+    args.add_argument("--output_csv",type=str,required=True)
+    args.add_argument("--local_csv_path",type=str,required=False,default=None)
+    return vars(args.parse_args())
+
+def pull_dataset(save_path:str,local_csv_path=None) : 
+    """Downlaods the fitzparick17 dataset and saves it as necessary
+
+    """
+    data_root = "/mnt/storage/fitzpatrick17k/"
+    if local_csv_path is None: 
+        print(f"Downloading from github")
+        df = pd.read_csv("https://raw.githubusercontent.com/mattgroh/fitzpatrick17k/refs/heads/main/fitzpatrick17k.csv")
+    else: 
+        df = pd.read_csv(local_csv_path) 
+
+    df['file'] =df['md5hash'].apply(lambda x: os.path.join(data_root,f"{x}.jpg"))
+    print(f"Stratiyin by partition label")
+    tr,val = train_test_split(df,random_state=42,shuffle=True,stratify=df['three_partition_label'],train_size=0.60) 
+    val,ts = train_test_split(val,random_state=42,stratify=val['three_partition_label'],train_size=0.5)
+    tr['split'] = 'train'
+    val['split']='val'
+    ts['split'] ='test'
+    final_df = pd.concat([tr,val,ts])
+    final_df['three_partition_label_cls'] = final_df['three_partition_label'].map({'non-neoplastic':0,'malignant':2,'benign':1})
+    print(final_df['three_partition_label_cls'].value_counts())
+    print(f"Saving dataset file to {save_path}")
+    final_df.to_csv(save_path,index=False)
+    return final_df
+    
+
+def _skin_transform_params() -> dict[str,list[str]|dict[str,list[float]]]:
+    conf_params = {
+    "train_transforms":["toTensor","resize","ColorJitter","norm","horizontal","affine"],
+    "test_transforms":["toTensor","resize","ColorJitter","norm","horizontal","affine"],
+    "transform_conf":{
+        "norm_mu":[ 0.485, 0.456, 0.406],
+        "norm_std":[0.229, 0.224, 0.225],
+        "brightness":[0.8,1.2],
+        "saturation":[0.8,1.1],
+        "contrast":[0.8,1.2],
+        "img_shape":[224,224]
+   }
+    }
+    return conf_params
+
+def main(): 
+    conf = _make_args()
+
+    match conf['mode']: 
+        case 'download_fitz':
+            print('hello')
+            pull_dataset(conf['output_csv'],local_csv_path=conf['local_csv_path'])
+        case _: 
+            raise ValueError("Illegal Mode argument")
+if __name__=='__main__':
+    main()
