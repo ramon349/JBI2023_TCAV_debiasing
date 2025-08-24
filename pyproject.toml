@@ -22,5 +22,7 @@ dependencies = [
 "wheel==0.45.1",
 "torchvision==0.23.0",
 "scikit-learn==1.7.1",
-"optuna==4.5.0"
+"optuna==4.5.0",
+"pandas==2.3.2",
+"tensorboard==2.20.0"
 ]
