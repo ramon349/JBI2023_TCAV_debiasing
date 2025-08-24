@@ -40,7 +40,7 @@ def get_data_choices():
 
 def get_model_choices():
     return ModelRegister.get_models()
-def build_train_args():
+def build_train_args(mode=None):
     """Parses args
     """
     parser = argparse.ArgumentParser(
@@ -68,7 +68,6 @@ def build_train_args():
         type=str,
         required=True,
     )
-    parser.add_argument("--log_dir", type=str, required=True) 
     parser.add_argument("--batch_size", required=True, type=int)
     parser.add_argument('--dataset',type=str,required=True,choices=get_data_choices())
     parser.add_argument('--col_info',type=json.loads,required=True) 
@@ -81,7 +80,16 @@ def build_train_args():
     parser.add_argument("--debug",type=parse_bool,required=False)
     parser.add_argument("--model_weight",type=str,required=False)
     parser.add_argument("--weight_task",required=False,default=False,type=parse_bool)
+    match mode: 
+        case 'train': 
+            parser.add_argument("--log_dir", type=str, required=True) 
+        case 'optimize':
+            parser.add_argument("--optuna_log",type=str,required=True)
+            parser.add_argument('--direction',type=json.loads,required=True)
+            parser.add_argument('--n_trials',type=int,required=True)
     return parser
+
+
 
 def build_tcav_args(): 
     parser = argparse.ArgumentParser(
@@ -116,7 +124,13 @@ def parse_bool(s: str):
         raise Exception("Typo in bool var please check")
 
 def get_train_args():
-    parser = build_train_args()
+    parser = build_train_args(mode='train')
+    args = parser.parse_args()
+    conf = vars(args)
+    return conf
+
+def get_optuna_params():
+    parser = build_train_args(mode='optimize')
     args = parser.parse_args()
     conf = vars(args)
     return conf
@@ -125,4 +139,3 @@ def get_tcav_args():
     args = parser.parse_args()
     conf = vars(args)
     return conf
-

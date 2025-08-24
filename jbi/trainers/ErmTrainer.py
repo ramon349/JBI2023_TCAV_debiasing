@@ -7,14 +7,12 @@ from torch import optim
 import torch 
 from tqdm import tqdm 
 from collections import defaultdict
-import pandas as pd 
-import numpy as np 
 from .trainer_factory import TrainerRegister 
 import os 
 from ..models.model_factory import remove_module
 from  ..helpers.helpers import proc_inference
 from sklearn.metrics import balanced_accuracy_score 
-
+import optuna 
 @TrainerRegister.register(cls_name="ErmTrainer")
 class BasicTrainer(object): 
     def __init__(self,model: nn.Module,tb_writter:SummaryWriter,conf:Dict,data_loaders:Dict) -> None:
@@ -103,7 +101,6 @@ class BasicTrainer(object):
         ):
             self.opti.zero_grad()
             (img_in, task,_) = batch  
-
             task_h = self.model(img_in.to(self.device)).cpu()
             loss  = self.criterions["task"](task_h, task)
             loss.backward()
@@ -161,6 +158,30 @@ class BasicTrainer(object):
         model_preds = pred_df[[e for e in pred_df if e.startswith('task_p')]].values.argmax(axis=1)
         acc = balanced_accuracy_score(pred_df['task_t'],model_preds)
         return acc
+    def _fit_optuna(self,trial:optuna.Trial): 
+        num_epochs = self.total_epochs 
+        best_val_loss = 90000 
+        val_loss = best_val_loss
+        best_epoch = -1 
+        for i in range(num_epochs): 
+            self.train_epoch()
+            self._log_scalar("learning_rate",self.sch.get_last_lr()[0],global_step = self.c_epoch )
+            val_loss = self.val_epoch() 
+            self.sch.step(val_loss) 
+            trial.report(val_loss,i)
+            if val_loss <= best_val_loss: 
+                self.store_model()
+                best_val_loss = val_loss
+                best_epoch = i 
+            if (i-best_epoch ) >=5: 
+                print("Going to do early breaking. 5 Epochs No Progress") 
+                break 
+        return val_loss
+    @classmethod
+    def get_trial_suggestions(cls,trial:optuna.Trial,c_conf):  
+        lr = trial.suggest_categorical("learn_rate",choices=[0.1,0.01,0.001]) 
+        c_conf['trainer_args']['learn_rate'] = lr 
+        return c_conf
 
 
 

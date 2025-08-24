@@ -54,16 +54,22 @@ def model_loader(conf):
     model = model.to(conf["device"][0])
     return model
 
+
 @ModelRegister.register("densenet121")
-def get_densenet121(conf): 
-    model = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1)
-    num_classes = conf['num_task'] 
-    o_feats= model.classifier.in_features 
-    model.classifier = nn.Linear(o_feats,num_classes)
-    return model 
+class myDensenet(nn.Module):
+    def __init__(self,conf): 
+        super().__init__()
+        self.model = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1)
+        num_classes = conf['num_task'] 
+        o_feats= self.model.classifier.in_features 
+        self.model.classifier = nn.Linear(o_feats,num_classes)
+    @staticmethod
+    def get_trial_suggestions(trial_obj,model_params):
+        return model_params 
+    def forward(self,x): 
+        return self.model(x)
 
 
 if __name__ == "__main__":
     print(f"We have {ModelRegister.num_models()} models")
     print(f"They are {ModelRegister.get_models()}") 
-    model = get_densenet121({'num_task':2})
