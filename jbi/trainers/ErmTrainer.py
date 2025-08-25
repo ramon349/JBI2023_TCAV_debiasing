@@ -204,8 +204,10 @@ class BasicTrainer(object):
 
     @classmethod
     def get_trial_suggestions(cls, trial: optuna.Trial, c_conf):
-        lr = trial.suggest_categorical("learn_rate", choices=[0.1, 0.01, 0.001])
+        lr = trial.suggest_categorical("learn_rate", choices=[0.01, 0.005, 0.001])
+        batch_size = trial.suggest_categorical("batch_size",choices=[8,16,32,64])
         c_conf["trainer_args"]["learn_rate"] = lr
+        c_conf["trainer_args"]["batch_size"] = batch_size
         return c_conf
 
 
