@@ -1,6 +1,7 @@
-import torch 
-import pandas as pd 
-import numpy as np 
+import torch
+import pandas as pd
+import numpy as np
+
 
 def make_mult_col(df, col_name, is_pred=False):
     if is_pred:
@@ -13,7 +14,9 @@ def make_mult_col(df, col_name, is_pred=False):
             df[f"{col_name}_{e}"] = arr[:, e]
         del df[col_name]
     else:
-        df[col_name] = arr    
+        df[col_name] = arr
+
+
 def proc_inference(ground_truths, preds):
     gt_df = pd.DataFrame(ground_truths)
     pred_df = pd.DataFrame(preds)

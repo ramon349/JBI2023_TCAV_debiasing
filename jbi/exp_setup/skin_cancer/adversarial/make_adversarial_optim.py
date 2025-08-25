@@ -5,19 +5,29 @@ import json
 from typing import Union, Any
 
 
-def _get_base_template() -> dict[str, Any]:
+def _get_adv_template() -> dict[str, Any]:
     transform_info = _skin_transform_params()
     template = {
         "csv_path": None,
         "num_workers": 16,
         "device": ["cuda:0"],
-        "batch_size": 8,
-        "dataset": "ImageData",
-        "model": "densenet121",
-        "trainer": "ErmTrainer",
-        "col_info": {"img_col": "file", "task_col": "three_partition_label_cls"},
-        "trainer_args": {"epochs": 30, "grad_step": 4, "learn_rate": 0.01},
-        "model_parameters": {"num_task": 3},
+        "batch_size": 16,
+        "dataset": "TwoTask",
+        "model": "DensenetTwoTaskAdv",
+        "trainer": "TCAVDebias",
+        "col_info": {
+            "img_col": "file",
+            "task_col": "three_partition_label_cls",
+            "demo_col": "discrete_fitz",
+        },
+        "trainer_args": {
+            "epochs": 30,
+            "grad_step": 1,
+            "learn_rate": 0.01,
+            "lambda": 0.5,
+            "layer_debias": "features.denseblock3.denselayer16.conv2",
+        },
+        "model_parameters": {"num_task": 3, "num_demo": 2},
         "splits": ["train", "test", "val"],
     }
     # Add the transform information
@@ -36,7 +46,7 @@ def _parse_args() -> dict[str, str]:
 
 def main():
     conf = _parse_args()
-    template = _get_base_template()
+    template = _get_adv_template()
     log_dir = Path(conf["optuna_log_dir"])
     config_dir = Path(conf["config_dir"])
     log_dir.mkdir(parents=True, exist_ok=True)

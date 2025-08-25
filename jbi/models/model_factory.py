@@ -1,8 +1,8 @@
 import torch
 import pdb
 from collections import OrderedDict
-from torch import nn 
-from torchvision.models import densenet121 ,DenseNet121_Weights
+from torch import nn
+from torchvision.models import densenet121, DenseNet121_Weights
 
 
 class ModelRegister:
@@ -42,6 +42,7 @@ def remove_module(w_d):
         new_d[new_name] = v
     return new_d
 
+
 def model_loader(conf):
     model_params = conf["model_parameters"]
     model = ModelRegister.get_model(conf["model"])(model_params)
@@ -57,19 +58,21 @@ def model_loader(conf):
 
 @ModelRegister.register("densenet121")
 class myDensenet(nn.Module):
-    def __init__(self,conf): 
+    def __init__(self, conf):
         super().__init__()
         self.model = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1)
-        num_classes = conf['num_task'] 
-        o_feats= self.model.classifier.in_features 
-        self.model.classifier = nn.Linear(o_feats,num_classes)
+        num_classes = conf["num_task"]
+        o_feats = self.model.classifier.in_features
+        self.model.classifier = nn.Linear(o_feats, num_classes)
+
     @staticmethod
-    def get_trial_suggestions(trial_obj,model_params):
-        return model_params 
-    def forward(self,x): 
+    def get_trial_suggestions(trial_obj, model_params):
+        return model_params
+
+    def forward(self, x):
         return self.model(x)
 
 
 if __name__ == "__main__":
     print(f"We have {ModelRegister.num_models()} models")
-    print(f"They are {ModelRegister.get_models()}") 
+    print(f"They are {ModelRegister.get_models()}")

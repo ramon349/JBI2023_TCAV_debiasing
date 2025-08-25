@@ -29,7 +29,7 @@ python3 -m pip install -e .
 ```bash
 python3 -m jbi.exp_setup.skin_cancer.skin_cancer_utils --mode download_fitz --output_csv /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv --local_csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitzpatrick17k.csv
 ```
-# Hyper Parameters for Baseline Model 
+### Hyper Parameters for Baseline Model 
 ```bash 
 python3 -m jbi.exp_setup.skin_cancer.baseline.make_baseline_optim --csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv \
 --config_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/configs/optims/baseline \
@@ -38,53 +38,31 @@ python3 -m jbi.exp_setup.skin_cancer.baseline.make_baseline_optim --csv_path /mn
 - NOTE: For some reason optuna hs an issue writitng its log.db file to certain network drive. Therefore it's suggested you use local storage or another file type? 
 
 
-# Training Baseline Model 
--  To train your own baseline mdoel you can use the jbi/config file in "./jbi/config/train_base" 
+### Make best training config
 ```bash 
-    python3 -m jbi.train --config_path jbi/config/train_base.json
+python3 -m jbi.exp_setup.skin_cancer.baseline.make_best_train --csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv \
+--config_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/configs/model_dev/baseline \
+--log_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/model_logs/model_dev/baseline \
+--optuna_log /home/ramon/optuna_logs/baseline/optuna_log.db
+ 
 ```
-- NOTE: some paths are hardcoded you will need to change those 
-- Bellow I will annotate the same jbi/config file with comments off what section does 
-    - csv_path : Absolute path to csv file specifying your dataset 
-    - num_workers: number of workers used during training 
-    - device: a list of gpu devices to use. Provided as a list  for future Distributed Training support 
-    - batch_size: Batch size used for training  
-    - dataset: which dataset class to be used during training 
-        - Single Task Training --> ImageData
-        - Multi Task or Debiasing --> TwoTask 
-        - TCAV layer experiemnts --> single   (NOTE: More on this later )
-        - You can add your own by defining a class and using the DataRegister method
-    - Model: Which model to be used  
-        - Singe Task --> densenet121 
-        - Multi Task --> DensenetTwoTask 
-        - Debiasing --> DensenetTwoTaskAdv
-        -  Define your own and register using ModelRegister 
-    - Trainer: Specifies training algorithm  
-        - Single Task -->  ErmTrainer 
-        - Multi Task --> TwoTaskTrainer 
-        - Adversarial Debiasing --> AdversarialTrainerVanilla  
-        - You can add your own by doing the modifications to TrainerRegister 
-    - train/test transforms  
-        - just a list of transforms. Make sure to maintain the deterministic transforms consistent between train and test 
-        - transform_conf then specifies additional parameters
-    - col_info: information used by the dataset class 
-        "img_col":"file"   is the path to an image file 
-        "task_col":"partition_cat"  your task label 
-    -  trainer_args: 
-        - Training-specific parameters
-    - model_parameters : 
-        - number of classes in your prediction tasks 
-    - "splits":["train", "test", "val"] 
-        - the splits we will see during training
-    "log_dir": "/home/ramon/jbi_2024/model_logs/"
-        -path to training log storage and storage of model weights 
+
 # Training the multi-task model 
-    - jbi/config/train_two_task.json
-    - follows the same logic as the single task model 
 ```bash 
-    python3 -m jbi.train --config_path jbi/config/train_two_task.json
+python3 -m jbi.exp_setup.skin_cancer.two_task.make_twoTask --csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv \
+--config_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/configs/model_dev/two_task \
+--log_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/model_logs/model_dev/two_task \
+--optuna_log /home/ramon/optuna_logs/baseline/optuna_log.db
 ```
 # TCAV 
+
+```bash 
+python3 -m jbi.exp_setup.skin_cancer.tcav.make_tcav_plot --csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv \
+--log_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/model_logs/tcav_viz \
+--weight_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/model_logs/model_dev/two_task/model_w.ckpt \
+--config_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/configs/tcav_viz
+
+```
 ```bash 
     python3 -m jbi.train --config_path jbi/config/tcav_explore.json
 ```
@@ -100,11 +78,12 @@ python3 -m jbi.exp_setup.skin_cancer.baseline.make_baseline_optim --csv_path /mn
  - "model.features.denseblock3.denselayer16.conv2"
 
 # Training Debiased model 
-    - you will  need to add several parameters to the training 
-    - particularly: 
-        layer_deibias in trainer_args 
-        lambda in trainer_args 
-        adv_delay in trainer_args
+```bash 
+python3 -m jbi.exp_setup.skin_cancer.adversarial.make_adversarial_optim --csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv \
+--config_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/configs/optims/adversarial_tcav \
+--optuna_log_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/model_logs/optuna/adv_tcav
+
+```
  ```bash
  python3 -m jbi.train --config_path ./jbi/config/train_adv_tcav.json 
  ```

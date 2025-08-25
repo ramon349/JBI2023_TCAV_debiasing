@@ -1,11 +1,11 @@
-
 import argparse
-import json 
-from collections import deque 
+import json
+from collections import deque
 
-from ..datasets.data_factory import DatasetRegister 
+from ..datasets.data_factory import DatasetRegister
 from ..trainers.trainer_factory import TrainerRegister
-from ..models.model_factory import ModelRegister 
+from ..models.model_factory import ModelRegister
+
 
 class LoadFromFile(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -28,29 +28,32 @@ class LoadFromFile(argparse.Action):
                 f"The Key {arg_name} is not an expected parameter. Delete it from config or update build_args method in helper_utils.configs.py"
             )
         return arg_name, arg_val
-    
+
+
 def get_trainer_choices():
-    """ Returns the possible traienrs available when parsing config
-    """
+    """Returns the possible traienrs available when parsing config"""
     return TrainerRegister.get_trainers()
-def get_data_choices(): 
-    """ Returns the possible datasets available when parsing config
-    """
-    return DatasetRegister.get_datasets() 
+
+
+def get_data_choices():
+    """Returns the possible datasets available when parsing config"""
+    return DatasetRegister.get_datasets()
+
 
 def get_model_choices():
     return ModelRegister.get_models()
+
+
 def build_train_args(mode=None):
-    """Parses args
-    """
+    """Parses args"""
     parser = argparse.ArgumentParser(
         description="Confguration for my deep learning model training for segmentation"
     )
     parser.add_argument(
         "--config_path", required=False, type=open, action=LoadFromFile, help="Path"
-    ) 
-    parser.add_argument("--csv_path",required=True,type=str)
-    parser.add_argument("--transform_conf",required=True,type=json.loads)
+    )
+    parser.add_argument("--csv_path", required=True, type=str)
+    parser.add_argument("--transform_conf", required=True, type=json.loads)
     parser.add_argument(
         "--train_transforms",
         type=json.loads,
@@ -69,71 +72,78 @@ def build_train_args(mode=None):
         required=True,
     )
     parser.add_argument("--batch_size", required=True, type=int)
-    parser.add_argument('--dataset',type=str,required=True,choices=get_data_choices())
-    parser.add_argument('--col_info',type=json.loads,required=True) 
-    parser.add_argument("--num_workers",type=int,required=True)
-    parser.add_argument("--device",type=json.loads,required=True)
-    parser.add_argument("--model",type=str,required=True,choices=get_model_choices())
-    parser.add_argument("--trainer_args",type=json.loads,required=True)
-    parser.add_argument("--splits",type=json.loads,required=True)
-    parser.add_argument("--model_parameters",type=json.loads,required=True)
-    parser.add_argument("--debug",type=parse_bool,required=False)
-    parser.add_argument("--model_weight",type=str,required=False)
-    parser.add_argument("--weight_task",required=False,default=False,type=parse_bool)
-    match mode: 
-        case 'train': 
-            parser.add_argument("--log_dir", type=str, required=True) 
-        case 'optimize':
-            parser.add_argument("--optuna_log",type=str,required=True)
-            parser.add_argument('--direction',type=json.loads,required=True)
-            parser.add_argument('--n_trials',type=int,required=True)
+    parser.add_argument(
+        "--dataset", type=str, required=True, choices=get_data_choices()
+    )
+    parser.add_argument("--col_info", type=json.loads, required=True)
+    parser.add_argument("--num_workers", type=int, required=True)
+    parser.add_argument("--device", type=json.loads, required=True)
+    parser.add_argument("--model", type=str, required=True, choices=get_model_choices())
+    parser.add_argument("--trainer_args", type=json.loads, required=True)
+    parser.add_argument("--splits", type=json.loads, required=True)
+    parser.add_argument("--model_parameters", type=json.loads, required=True)
+    parser.add_argument("--debug", action="store_true", required=False, default=False)
+    parser.add_argument("--model_weight", type=str, required=False)
+    parser.add_argument("--weight_task", required=False, default=False, type=parse_bool)
+    match mode:
+        case "train":
+            parser.add_argument("--log_dir", type=str, required=True)
+        case "optimize":
+            parser.add_argument("--optuna_log", type=str, required=True)
+            parser.add_argument("--direction", type=json.loads, required=True)
+            parser.add_argument("--n_trials", type=int, required=True)
     return parser
 
 
-
-def build_tcav_args(): 
+def build_tcav_args():
     parser = argparse.ArgumentParser(
         description="Confguration for my deep learning model training for segmentation"
     )
     parser.add_argument(
         "--config_path", required=False, type=open, action=LoadFromFile, help="Path"
-    ) 
-    parser.add_argument("--csv_path",required=True,type=str)
-    parser.add_argument("--transform_conf",required=True,type=json.loads)
+    )
+    parser.add_argument("--csv_path", required=True, type=str)
+    parser.add_argument("--transform_conf", required=True, type=json.loads)
     parser.add_argument(
         "--test_transforms",
         type=json.loads,
         required=True,
         help="List of Names of test transforms and augmentations in form [load] should be subset of train transforms",
     )  # TODO: asert test is subset of train excluding rands
-    parser.add_argument("--tcav_args",type=json.loads,required=True)
-    parser.add_argument('--col_info',type=json.loads,required=True) 
-    parser.add_argument("--model_parameters",type=json.loads,required=True)
-    parser.add_argument("--model",type=str,required=True,choices=get_model_choices())
-    parser.add_argument("--model_weight",type=str,required=False,default=None)
-    parser.add_argument("--device",type=json.loads,required=True)
-    parser.add_argument("--dataset",type=str,required=True)
-    parser.add_argument("--log_dir",type=str,required=True)
+    parser.add_argument("--tcav_args", type=json.loads, required=True)
+    parser.add_argument("--col_info", type=json.loads, required=True)
+    parser.add_argument("--model_parameters", type=json.loads, required=True)
+    parser.add_argument("--model", type=str, required=True, choices=get_model_choices())
+    parser.add_argument("--model_weight", type=str, required=False, default=None)
+    parser.add_argument("--device", type=json.loads, required=True)
+    parser.add_argument("--dataset", type=str, required=True)
+    parser.add_argument("--log_dir", type=str, required=True)
     return parser
-def parse_bool(s: str): 
-    if s.lower() == 'true': 
-        return  True  
-    if s.lower() == 'false': 
-        return  False  
-    else: 
+
+
+def parse_bool(s: str):
+    if s.lower() == "true":
+        return True
+    if s.lower() == "false":
+        return False
+    else:
         raise Exception("Typo in bool var please check")
 
+
 def get_train_args():
-    parser = build_train_args(mode='train')
+    parser = build_train_args(mode="train")
     args = parser.parse_args()
     conf = vars(args)
     return conf
 
+
 def get_optuna_params():
-    parser = build_train_args(mode='optimize')
+    parser = build_train_args(mode="optimize")
     args = parser.parse_args()
     conf = vars(args)
     return conf
+
+
 def get_tcav_args():
     parser = build_tcav_args()
     args = parser.parse_args()

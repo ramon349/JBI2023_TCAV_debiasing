@@ -1,2 +1,2 @@
-from .ErmTrainer import * 
+from .ErmTrainer import *
 from .AdverTrainer import *
