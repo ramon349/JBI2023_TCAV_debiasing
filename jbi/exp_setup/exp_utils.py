@@ -10,6 +10,7 @@ def _get_best_params(log_file):
     df = study.trials_dataframe()
     df = df.sort_values(by="value", ascending=True)
     best_trial = df.iloc[0]
+    print(f"Best Trial Value: {best_trial['value']}")
     param_d = dict()
     for k, v in best_trial.to_dict().items():
         if k.startswith("params_"):
