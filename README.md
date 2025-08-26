@@ -12,24 +12,13 @@ python3 -m pip install -r ./reqs.txt
 python3 -m pip install -e . 
  ```
 
-# Preparing datasets 
- - I define a class to load Image Date under  datasets/image_data.py 
- - it is able to load png/jpg images supported by PIL 
- - it expects you provide a config file with the following information 
-    - data_path: absolute path to csv file 
-    - inside the csf file you should define a split colum for train/val/test 
-    - col_info has additional metadata 
-        - task_col is the column containing your task labels 
-- You can subclass with your loading logic if necessary 
-- For debiasing experiments, we require a task variable and a demographic variable 
-- The TwoTask datasets will do precisely that by adding a "demo_col" that works the same way as task_Col  
-
 # Download the fitz17k dataset 
-- NOTICE: On the asu server there are 
 ```bash
 python3 -m jbi.exp_setup.skin_cancer.skin_cancer_utils --mode download_fitz --output_csv /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv --local_csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitzpatrick17k.csv
 ```
 ### Hyper Parameters for Baseline Model 
+- NOTICE: On the asu server there are issues with the network drive. So optuna logs are stored in a  home directory instead 
+
 ```bash 
 python3 -m jbi.exp_setup.skin_cancer.baseline.make_baseline_optim --csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv \
 --config_dir /mnt/storage/ramon_data_curations/skin_cancer_redo/data/configs/optims/baseline \

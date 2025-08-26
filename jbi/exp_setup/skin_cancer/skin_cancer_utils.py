@@ -2,8 +2,21 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import os
 from argparse import ArgumentParser
+from PIL import UnidentifiedImageError ,Image 
+from multiprocessing import Pool 
+from tqdm import tqdm 
 
+def check_img(s): 
+    is_file = True
+    try: 
+        Image.open(s) 
+    except UnidentifiedImageError: 
+        is_file = False
+    except FileNotFoundError: 
+        is_file = False
+    return s,is_file 
 
+    
 def _make_args():
     args = ArgumentParser()
     args.add_argument("--mode", type=str, required=True, choices=["download_fitz"])
@@ -24,6 +37,16 @@ def pull_dataset(save_path: str, local_csv_path=None):
         df = pd.read_csv(local_csv_path)
 
     df["file"] = df["md5hash"].apply(lambda x: os.path.join(data_root, f"{x}.jpg"))
+    stat_map = dict() 
+    with Pool(10) as P: 
+        res = P.imap_unordered(check_img,df['file'])
+        for k,v in tqdm(res,total=df.shape[0]): 
+            stat_map[k] = v
+    df['is_file'] = df['file'].map(stat_map) 
+    df = df[df['is_file']].copy() 
+    df = df[df['fitzpatrick_scale']>=0]
+    df['discrete_fitz' ] = (df['fitzpatrick_scale']>=4).astype(int)
+
     print(f"Stratiyin by partition label")
     tr, val = train_test_split(
         df,
