@@ -42,6 +42,7 @@ class BasicTrainer(object):
         self.early_stop = 5
         self._suppres_tqdm = False
         self.compile_model()
+        self.early_stop = self.trainer_args['early_stop']
 
     def compile_model(self):
         pass
@@ -63,7 +64,7 @@ class BasicTrainer(object):
                 self.store_model()
                 best_val_loss = val_loss
                 best_epoch = i
-            if (i - best_epoch) >= 5:
+            if (i - best_epoch) >= self.early_stop:
                 print("Going to do early breaking. 5 Epochs No Progress")
                 break
 

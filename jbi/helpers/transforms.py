@@ -43,6 +43,8 @@ def get_transform(names, main_config):
         return torch_trx.Pad()
     if names=='padSquare': 
         return PadToSize(size=(224,224))
+    if names=='gauss':
+        return AddGaussNoise()
     raise Exception(f"Couldn't fnd a match for argument {names}")
 
 
@@ -94,7 +96,6 @@ class PadToSize:
         self.target_height, self.target_width = size
         self.fill = fill
         self.padding_mode = padding_mode
-        print(self.padding_mode)
 
     def __call__(self, img):
         """
@@ -124,7 +125,6 @@ class PadToSize:
         # Calculate padding
         pad_height = target_c - current_height
         pad_width = target_c - current_width
-        print(f"{pad_height},{pad_width}")
         # Only pad if the image is smaller than the target size
         if pad_height < 0:
             pad_height = 0
@@ -160,4 +160,24 @@ class PadToSize:
 
     def __repr__(self):
         return self.__class__.__name__ + f'(size=({self.target_height}, {self.target_width}), padding_mode={self.padding_mode}, fill={self.fill})'
+    
+class AddGaussNoise(object):
+    def __init__(self, p=0.5, mean=0, std=0.15):
+        self.p = p
+        self.std = std
+        self.mean = mean
 
+    def __call__(self, tensor):
+        if torch.randn(1) < self.p:
+            noise_vec = torch.randn(tensor.size()) * self.std + self.mean
+            noise_vec = noise_vec* (tensor.max()/2)
+
+            out = (tensor + noise_vec)  # you changed this to be compatible with the 3.7 version. 3.8 somehow requires .size()
+            return out.type(torch.FloatTensor)
+        else:
+            return tensor.type(torch.FloatTensor)
+
+    def __repr__(self):
+        return self.__class__.__name__ + "(mean={0}, std={1})".format(
+            self.mean, self.std
+        )
