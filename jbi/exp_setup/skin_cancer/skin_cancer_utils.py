@@ -23,12 +23,12 @@ def _make_args():
     args.add_argument("--output_csv", type=str, required=True)
     args.add_argument("--local_csv_path", type=str, required=False, default=None)
     args.add_argument("--data_root",type=str,required=True)
+    args.add_argument("--mask_data_root",type=str,required=True)
     return vars(args.parse_args())
 
 
-def pull_dataset(save_path: str, local_csv_path=None,data_root=None):
-    """Downlaods the fitzparick17 dataset and saves it as necessary"""
-    #data_root = "/mnt/storage/fitzpatrick17k/"
+def pull_dataset(save_path: str, local_csv_path=None,data_root=None,mask_data_root=None):
+    """Downloads the fitzparick17 dataset and saves it as necessary"""
     if local_csv_path is None:
         print(f"Downloading from github")
         df = pd.read_csv(
@@ -38,6 +38,7 @@ def pull_dataset(save_path: str, local_csv_path=None,data_root=None):
         df = pd.read_csv(local_csv_path)
 
     df["file"] = df["md5hash"].apply(lambda x: os.path.join(data_root, f"{x}.jpg"))
+    df['mask_file'] =df["md5hash"].apply(lambda x: os.path.join(mask_data_root, f"{x}.jpg")) 
     stat_map = dict() 
     with Pool(10) as P: 
         res = P.imap_unordered(check_img,df['file'])
@@ -76,20 +77,23 @@ def _skin_transform_params() -> dict[str, list[str] | dict[str, list[float]]]:
     conf_params = {
         "train_transforms": [
             "load",
+            "scaleIntensity",
             "norm",
             "channelFirst",
-            "randSCaleCrop",
+            "randScaleCrop",
             "resize",
             "rotate",
             "randGaus"
         ],
         "test_transforms": [
             "load",
+            "scaleIntensity",
             "norm",
             "channelFirst",
             "resize",
         ],
         "transform_conf": {
+            "use_mask":True,
             "norm_mu": [0.485, 0.456, 0.406],
             "norm_std": [0.229, 0.224, 0.225],
             "brightness": [0.8, 1.2],
@@ -106,7 +110,7 @@ def main():
 
     match conf["mode"]:
         case "download_fitz":
-            pull_dataset(conf["output_csv"], local_csv_path=conf["local_csv_path"],data_root=conf['data_root'])
+            pull_dataset(conf["output_csv"], local_csv_path=conf["local_csv_path"],data_root=conf['data_root'],mask_data_root=conf['mask_data_root'])
         case _:
             raise ValueError("Illegal Mode argument")
 

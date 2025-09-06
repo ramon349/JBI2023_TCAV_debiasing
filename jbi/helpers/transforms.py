@@ -2,35 +2,41 @@ import torch
 from torch.nn import functional as F 
 from monai.transforms import RandScaleCropd,ResizeD,RandGaussianNoiseD,NormalizeIntensityD,ScaleIntensityD,RandRotate90D,LoadImageD,Compose,EnsureChannelFirstd
 
-def get_transform(names, main_config,mode='train'):
+def get_transform(names, main_config):
     """Given the name of a transform we build said torch transform. Using params from config as needed
     names: str specifying which transfrom to build
     config: dict containing parameters used by all transforms
     """
     config = main_config["transform_conf"]
-    match mode: 
-        case 'train': 
-            keys = ['img','mask']
-        case _: 
-            keys = ['img']
-    if names =='load': 
-        return LoadImageD(keys=['img_ke'])
-    if names == "norm":
-        mu = torch.tensor(config["norm_mu"])
-        std = torch.tensor(config["norm_std"])
-        return NormalizeIntensityD(keys=['img'],subtrahend=mu,divisor=std)
-    if names =='channelFirst': 
-        return EnsureChannelFirstd(keys=keys) 
-    if 'randScaleCrop': 
-        return RandScaleCropd(keys=keys,roi_scale=0.5,max_roi_scale=1.2,random_size=True)
-    if names == "resize":
-        shape0 = config["img_shape"][0]
-        shape1 = config["img_shape"][1]
-        return ResizeD(keys=keys,spatial_size=[shape0,shape1]),
-    if names =='rotate': 
-        return RandRotate90D(keys=keys,prob=0.5)
-    if names =='randGaus': 
-        return RandGaussianNoiseD(keys=['img'],mean=0,std=0.1,prob=0.5)
+    useMask = config['use_mask'] 
+    col_info = main_config['col_info']
+    img_col = col_info['img_col'] 
+    if useMask: 
+        mask_col = col_info['mask_col']
+        keys = [img_col,mask_col] 
+    else:
+        keys = [img_col]
+    match names: 
+        case 'load':
+            return LoadImageD(keys=keys)
+        case 'scaleIntensity':
+            return ScaleIntensityD(keys=[img_col])
+        case  'norm':
+            mu = torch.tensor(config["norm_mu"])
+            std = torch.tensor(config["norm_std"])
+            return NormalizeIntensityD(keys=[img_col],subtrahend=mu,divisor=std)
+        case 'channelFirst':
+            return EnsureChannelFirstd(keys=keys) 
+        case 'randScaleCrop': 
+            return RandScaleCropd(keys=keys,roi_scale=0.5,max_roi_scale=1.2,random_size=True)
+        case "resize":
+            shape0 = config["img_shape"][0]
+            shape1 = config["img_shape"][1]
+            return ResizeD(keys=keys,spatial_size=[shape0,shape1])
+        case 'rotate': 
+            return RandRotate90D(keys=keys,prob=0.5)
+        case 'randGaus': 
+            return RandGaussianNoiseD(keys=[img_col],mean=0,std=0.1,prob=0.5)
     raise Exception(f"Couldn't fnd a match for argument {names}")
 
 
