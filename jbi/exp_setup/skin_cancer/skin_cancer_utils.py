@@ -22,12 +22,13 @@ def _make_args():
     args.add_argument("--mode", type=str, required=True, choices=["download_fitz"])
     args.add_argument("--output_csv", type=str, required=True)
     args.add_argument("--local_csv_path", type=str, required=False, default=None)
+    args.add_argument("--data_root",type=str,required=True)
     return vars(args.parse_args())
 
 
-def pull_dataset(save_path: str, local_csv_path=None):
+def pull_dataset(save_path: str, local_csv_path=None,data_root=None):
     """Downlaods the fitzparick17 dataset and saves it as necessary"""
-    data_root = "/mnt/storage/fitzpatrick17k/"
+    #data_root = "/mnt/storage/fitzpatrick17k/"
     if local_csv_path is None:
         print(f"Downloading from github")
         df = pd.read_csv(
@@ -74,20 +75,19 @@ def pull_dataset(save_path: str, local_csv_path=None):
 def _skin_transform_params() -> dict[str, list[str] | dict[str, list[float]]]:
     conf_params = {
         "train_transforms": [
-            "toTensor",
-            "resize",
-            "ColorJitter",
+            "load",
             "norm",
-            "horizontal",
-            "affine",
+            "channelFirst",
+            "randSCaleCrop",
+            "resize",
+            "rotate",
+            "randGaus"
         ],
         "test_transforms": [
-            "toTensor",
-            "resize",
-            "ColorJitter",
+            "load",
             "norm",
-            "horizontal",
-            "affine",
+            "channelFirst",
+            "resize",
         ],
         "transform_conf": {
             "norm_mu": [0.485, 0.456, 0.406],
@@ -106,8 +106,7 @@ def main():
 
     match conf["mode"]:
         case "download_fitz":
-            print("hello")
-            pull_dataset(conf["output_csv"], local_csv_path=conf["local_csv_path"])
+            pull_dataset(conf["output_csv"], local_csv_path=conf["local_csv_path"],data_root=conf['data_root'])
         case _:
             raise ValueError("Illegal Mode argument")
 

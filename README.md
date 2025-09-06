@@ -6,8 +6,7 @@
 # Setup Instructions 
 - Install the conda environment to ensure the packages are compatible. 
 ```bash 
- conda create --name jbi --file jbi_env.yml
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+ conda create --name jbi python=3.10.18
 python3 -m pip install -r ./reqs.txt
 python3 -m pip install -e . 
  ```

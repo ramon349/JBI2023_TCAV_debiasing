@@ -1,58 +1,44 @@
-import torchvision.transforms as torch_trx
-from torchvision.transforms.v2 import ScaleJitter,ToImage,ToTensor,ToDtype
 import torch
 from torch.nn import functional as F 
+from monai.transforms import RandScaleCropd,ResizeD,RandGaussianNoiseD,NormalizeIntensityD,ScaleIntensityD,RandRotate90D,LoadImageD,Compose,EnsureChannelFirstd
 
-def get_transform(names, main_config):
+def get_transform(names, main_config,mode='train'):
     """Given the name of a transform we build said torch transform. Using params from config as needed
     names: str specifying which transfrom to build
     config: dict containing parameters used by all transforms
     """
     config = main_config["transform_conf"]
+    match mode: 
+        case 'train': 
+            keys = ['img','mask']
+        case _: 
+            keys = ['img']
+    if names =='load': 
+        return LoadImageD(keys=['img_ke'])
     if names == "norm":
-        mu = config["norm_mu"] = config["norm_mu"]
-        std = config["norm_std"] = config["norm_std"]
-        return torch_trx.Normalize(mu, std)
+        mu = torch.tensor(config["norm_mu"])
+        std = torch.tensor(config["norm_std"])
+        return NormalizeIntensityD(keys=['img'],subtrahend=mu,divisor=std)
+    if names =='channelFirst': 
+        return EnsureChannelFirstd(keys=keys) 
+    if 'randScaleCrop': 
+        return RandScaleCropd(keys=keys,roi_scale=0.5,max_roi_scale=1.2,random_size=True)
     if names == "resize":
         shape0 = config["img_shape"][0]
         shape1 = config["img_shape"][1]
-        return torch_trx.Resize((shape0, shape1))
-    if names == "horizontal":
-        return torch_trx.RandomHorizontalFlip(p=0.5)
-    if names == "vertical":
-        return torch_trx.RandomVerticalFlip(p=0.5)
-    if names == "affine":
-        return torch_trx.RandomAffine(15)
-    if names == "centerCrop":
-        return torch_trx.CenterCrop((224, 224))
-    if names == "ColorJitter":
-        bright = config["brightness"]
-        contrast = config["contrast"]
-        saturation = config["saturation"]
-        return torch_trx.ColorJitter(
-            brightness=(bright[0], bright[1]), contrast=contrast, saturation=saturation
-        )
-    if names == "toTensor":
-        return ToDtype(dtype=torch.float32,scale=True)
-    if names =='ScaleJitter':
-        print('adding')
-        return  ScaleJitter(target_size=(224,224),scale_range=(0.8,1.5),)
-    if names=='toImage':
-        return ToImage()
-    if names=='pad':
-        return torch_trx.Pad()
-    if names=='padSquare': 
-        return PadToSize(size=(224,224))
-    if names=='gauss':
-        return AddGaussNoise()
+        return ResizeD(keys=keys,spatial_size=[shape0,shape1]),
+    if names =='rotate': 
+        return RandRotate90D(keys=keys,prob=0.5)
+    if names =='randGaus': 
+        return RandGaussianNoiseD(keys=['img'],mean=0,std=0.1,prob=0.5)
     raise Exception(f"Couldn't fnd a match for argument {names}")
 
 
 def gen_transforms(confi):
-    train_transform = torch_trx.Compose(
+    train_transform = Compose(
         [get_transform(e, confi) for e in confi["train_transforms"]]
     )
-    val_transform = torch_trx.Compose(
+    val_transform = Compose(
         [get_transform(e, confi) for e in confi["test_transforms"]]
     )
     return train_transform, val_transform
@@ -66,7 +52,7 @@ def gen_test_transforms(confi, mode="test"):
         l_transform = get_transform(e, confi)
         print(l_transform)
         my_transforms.append(l_transform)
-    val_transform = torch_trx.Compose(
+    val_transform = Compose(
         my_transforms
     )  # Compose([get_transform(e, confi) for e in confi["test_transforms"]])
     return val_transform
