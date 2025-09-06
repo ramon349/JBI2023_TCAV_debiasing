@@ -1,7 +1,6 @@
 #known directories i will create 
 *__pycache__
 logs 
-datasets/
 model_checkpoints/
 
 #file extensions 
