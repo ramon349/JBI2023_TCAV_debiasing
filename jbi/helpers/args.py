@@ -43,6 +43,11 @@ def get_data_choices():
 def get_model_choices():
     return ModelRegister.get_models()
 
+def pass_dict(d_stuff): 
+    json.loads()
+    breakpoint()
+    return d_stuff
+
 
 def build_train_args(mode=None):
     """Parses args"""
@@ -82,7 +87,7 @@ def build_train_args(mode=None):
     parser.add_argument("--trainer_args", type=json.loads, required=True)
     parser.add_argument("--splits", type=json.loads, required=True)
     parser.add_argument("--model_parameters", type=json.loads, required=True)
-    parser.add_argument("--debug", action="store_true", required=False, default=False)
+    parser.add_argument("--debug", type=parse_bool, required=False, default=False)
     parser.add_argument("--model_weight", type=str, required=False)
     parser.add_argument("--weight_task", required=False, default=False, type=parse_bool)
     match mode:

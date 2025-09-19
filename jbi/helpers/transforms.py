@@ -1,6 +1,7 @@
 import torch
 from torch.nn import functional as F 
-from monai.transforms import RandScaleCropd,ResizeD,RandGaussianNoiseD,NormalizeIntensityD,ScaleIntensityD,RandRotate90D,LoadImageD,Compose,EnsureChannelFirstd
+from monai.transforms import RandScaleCropd,ResizeD,RandGaussianNoiseD,NormalizeIntensityD,ScaleIntensityD,RandRotate90D,LoadImageD,Compose,EnsureChannelFirstd,RandCropByPosNegLabeld
+from monai.data import PILReader
 
 def get_transform(names, main_config):
     """Given the name of a transform we build said torch transform. Using params from config as needed
@@ -18,7 +19,7 @@ def get_transform(names, main_config):
         keys = [img_col]
     match names: 
         case 'load':
-            return LoadImageD(keys=keys)
+            return LoadImageD(keys=keys,reader=PILReader(),image_only=False)
         case 'scaleIntensity':
             return ScaleIntensityD(keys=[img_col])
         case  'norm':
@@ -28,7 +29,9 @@ def get_transform(names, main_config):
         case 'channelFirst':
             return EnsureChannelFirstd(keys=keys) 
         case 'randScaleCrop': 
-            return RandScaleCropd(keys=keys,roi_scale=0.5,max_roi_scale=1.2,random_size=True)
+            return RandScaleCropd(keys=keys,roi_scale=0.5,max_roi_scale=1.2,random_size=True,random_center=False)
+        case 'randCropPos':
+            return RandCropByPosNegLabeld(keys=keys,label_key=mask_col,pos=255,neg=0,num_samples=1,image_key=img_col,spatial_size=(-1,-1))
         case "resize":
             shape0 = config["img_shape"][0]
             shape1 = config["img_shape"][1]

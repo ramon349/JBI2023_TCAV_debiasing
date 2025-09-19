@@ -12,7 +12,8 @@ from ..models.model_factory import remove_module
 from ..helpers.helpers import proc_inference
 from sklearn.metrics import balanced_accuracy_score
 import optuna
-
+import monai 
+from monai.data import meta_tensor 
 
 @TrainerRegister.register(cls_name="ErmTrainer")
 class BasicTrainer(object):
@@ -43,7 +44,9 @@ class BasicTrainer(object):
         self._suppres_tqdm = False
         self.compile_model()
         self.early_stop = self.trainer_args['early_stop']
-
+        col_info = self.conf['col_info']
+        self.img_col  = col_info['img_col']
+        self.task_col = col_info['task_col']
     def compile_model(self):
         pass
 
@@ -117,7 +120,8 @@ class BasicTrainer(object):
             enumerate(self.dls["train"]), total=len(self.dls["train"])
         ):
             self.opti.zero_grad()
-            (img_in, task, _) = batch
+            img_in = batch[self.img_col]
+            task = batch[self.task_col]
             task_h = self.model(img_in.to(self.device)).cpu()
             loss = self.criterions["task"](task_h, task)
             loss.backward()
@@ -136,7 +140,8 @@ class BasicTrainer(object):
             all_loss = 0
             val_len = len(self.dls["val"])
             for i, batch in enumerate(self.dls["val"]):
-                (img_in, task, _) = batch
+                img_in = batch[self.img_col]
+                task = batch[self.task_col]
                 task_h = self.model(img_in.to(self.device)).cpu()
                 task_loss += self.criterions["task"](task_h, task).item()
             task_loss /= val_len
@@ -155,7 +160,9 @@ class BasicTrainer(object):
             for i, batch in tqdm(
                 enumerate(dl), total=len(dl), disable=self._suppres_tqdm
             ):
-                (img_in, task, img_path) = batch
+                img_in = batch[self.img_col]
+                task = batch[self.task_col]
+                img_path = batch[f"{self.img_col}_meta_dict"]['filename_or_obj']
                 task_h = self.model(img_in.to(self.device)).cpu()
 
                 truth_names = ["task_t"]
@@ -163,10 +170,11 @@ class BasicTrainer(object):
                 pred_names = ["task_p"]
                 pred_vals = [task_h]
                 for n, e in zip(truth_names, truth_vals):
-                    sub = e if type(e) is not torch.tensor else e.numpy()
+                    sub = tensor_convert(e)
                     ground_truths[n].extend(sub)
                 for n, e in zip(pred_names, pred_vals):
-                    preds[n].extend(e)
+                    sub = tensor_convert(e)
+                    preds[n].extend(sub)
                 all_paths.extend(img_path)
         ret_df = proc_inference(ground_truths, preds)
         ret_df["paths"] = all_paths
@@ -341,3 +349,10 @@ class TwoTaskTrainerAux(TwoTaskTrainer):
         self.sch = optim.lr_scheduler.ReduceLROnPlateau(
             self.opti, mode="min", patience=3
         )
+
+def tensor_convert(tensor):
+    try: 
+        out = tensor.numpy()
+    except: 
+        out = tensor
+    return out

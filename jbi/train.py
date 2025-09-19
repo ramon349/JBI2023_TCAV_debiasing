@@ -20,12 +20,7 @@ def get_loaders(conf):
             c_trx = tr_transforms
         else:
             c_trx = ts_transforms
-        ds_sub = ds_obj(conf=conf, split=e, transforms=c_trx)
-        if conf["debug"] == True:
-            old_l = len(ds_sub)
-            ds_sub.data = ds_sub.data.sample(frac=0.01, random_state=1996)
-            new_l = len(ds_sub)
-            print(f"The {e} dset went from {old_l} down to {new_l}")
+        ds_sub = ds_obj(conf=conf, split=e, transforms=c_trx,debug=conf['debug'])
         sampler = None
         shuffle = True
         dl_dict[e] = DataLoader(

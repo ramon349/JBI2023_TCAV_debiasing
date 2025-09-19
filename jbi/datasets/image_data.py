@@ -15,20 +15,22 @@ def make_image_d(df,cols:list):
     return data_l 
 
 @DatasetRegister.register("ImageData")
-def make_image_data(transforms=None,split=None,conf=None): 
+def make_image_data(transforms=None,split=None,conf=None,debug=False): 
         data_path = conf['csv_path']
-        data = pd.read_csv(data_path,dtype='str')
+        data = pd.read_csv(data_path)
         data = data[data['split']==split]  
         col_info = conf['col_info']
         task_col = col_info['task_col']
         img_col =  col_info['img_col']
         data_seq = make_image_d(data,cols=[task_col,img_col])
+        if debug: 
+            data_seq = data_seq[0:200]
         return monaiDataset(data=data_seq,transform=transforms)
 
 @DatasetRegister.register("ImageDataMask")
-def make_image_data(transforms=None,split=None,conf=None): 
+def make_image_data(transforms=None,split=None,conf=None,debug=False): 
         data_path = conf['csv_path']
-        data = pd.read_csv(data_path,dtype='str')
+        data = pd.read_csv(data_path)
         data = data[data['split']==split]  
         col_info = conf['col_info']
         task_col = col_info['task_col']
