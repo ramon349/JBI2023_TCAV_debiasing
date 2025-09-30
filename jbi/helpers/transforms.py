@@ -2,6 +2,9 @@ import torch
 from torch.nn import functional as F 
 from monai.transforms import RandScaleCropd,ResizeD,RandGaussianNoiseD,NormalizeIntensityD,ScaleIntensityD,RandRotate90D,LoadImageD,Compose,EnsureChannelFirstd,RandCropByPosNegLabeld
 from monai.data import PILReader
+from monai.transforms import MapTransform,Transform
+from monai.data.meta_obj import get_track_meta
+from monai.utils import convert_to_tensor
 
 def get_transform(names, main_config):
     """Given the name of a transform we build said torch transform. Using params from config as needed
@@ -40,6 +43,8 @@ def get_transform(names, main_config):
             return RandRotate90D(keys=keys,prob=0.5)
         case 'randGaus': 
             return RandGaussianNoiseD(keys=[img_col],mean=0,std=0.1,prob=0.5)
+        case 'make8Bit': 
+            return  Make8Bitd(keys=[img_col])
     raise Exception(f"Couldn't fnd a match for argument {names}")
 
 
@@ -176,3 +181,27 @@ class AddGaussNoise(object):
         return self.__class__.__name__ + "(mean={0}, std={1})".format(
             self.mean, self.std
         )
+
+class Make8Bit(Transform):
+    def __init__(self,update_meta=True):
+        super().__init__()
+        self.update_meta =  update_meta
+    def __call__(self,img):
+        img = convert_to_tensor(img, track_meta=get_track_meta()).squeeze(0) 
+        x_min = torch.min(img)
+        if x_min <0: 
+            img = img + (-1*x_min)
+        else: 
+            img = img - x_min
+        img_scaled = (img/img.max())*255
+        return img_scaled 
+
+class Make8Bitd(MapTransform):
+    def __init__(self, keys=None,allow_missing_keys = False,update_meta=False) -> None:
+        super().__init__(keys, allow_missing_keys) 
+        self.converter =  Make8Bit(update_meta=update_meta) 
+    def __call__(self, data):
+        d = dict(data)
+        for key in self.key_iterator(d):
+            d[key] = self.converter(d[key])
+        return d    

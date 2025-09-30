@@ -13,7 +13,10 @@ python3 -m pip install -e .
 
 # Download the fitz17k dataset 
 ```bash
-python3 -m jbi.exp_setup.skin_cancer.skin_cancer_utils --mode download_fitz --output_csv /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitz17k.csv --local_csv_path /mnt/storage/ramon_data_curations/skin_cancer_redo/data/csvs/fitzpatrick17k.csv
+python3 -m jbi.exp_setup.skin_cancer.skin_cancer_utils --mode download_fitz --output_csv /media/Datacenter_storage/ramon_dataset_curations/skincancer_project/data/csvs/fitz17k.csv \
+--local_csv_path /media/Datacenter_storage/ramon_dataset_curations/skincancer_project/data/csvs/fitz17k.csv \
+--data_root /media/Datacenter_storage/MADHU/skin_cancer/deployement_pipeline/app/test/test_images/data/finalfitz17k/ \
+--mask_data_root /media/Datacenter_storage/MADHU/skin_cancer/deployement_pipeline/app/test/test_images/data/fitzpatrick_segmentation_masks_fine-tuned_BiomedParse/mask_images/
 ```
 ### Hyper Parameters for Baseline Model 
 - NOTICE: On the asu server there are issues with the network drive. So optuna logs are stored in a  home directory instead 
