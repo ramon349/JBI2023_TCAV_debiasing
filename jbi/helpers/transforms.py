@@ -5,6 +5,7 @@ from monai.data import PILReader
 from monai.transforms import MapTransform,Transform
 from monai.data.meta_obj import get_track_meta
 from monai.utils import convert_to_tensor
+from .augments.randShiftCrop import SCropd
 
 def get_transform(names, main_config):
     """Given the name of a transform we build said torch transform. Using params from config as needed
@@ -28,11 +29,12 @@ def get_transform(names, main_config):
         case  'norm':
             mu = torch.tensor(config["norm_mu"])
             std = torch.tensor(config["norm_std"])
-            return NormalizeIntensityD(keys=[img_col],subtrahend=mu,divisor=std)
+            return NormalizeIntensityD(keys=[img_col],subtrahend=mu,divisor=std,channel_wise=True)
         case 'channelFirst':
             return EnsureChannelFirstd(keys=keys) 
         case 'randScaleCrop': 
-            return RandScaleCropd(keys=keys,roi_scale=0.5,max_roi_scale=1.2,random_size=True,random_center=False)
+            scale_min,scale_max = config['ScaleCropMinMax']
+            return RandScaleCropd(keys=keys,roi_scale=scale_min,max_roi_scale=scale_max,random_size=True,random_center=False,)
         case 'randCropPos':
             return RandCropByPosNegLabeld(keys=keys,label_key=mask_col,pos=255,neg=0,num_samples=1,image_key=img_col,spatial_size=(-1,-1))
         case "resize":
@@ -45,6 +47,8 @@ def get_transform(names, main_config):
             return RandGaussianNoiseD(keys=[img_col],mean=0,std=0.1,prob=0.5)
         case 'make8Bit': 
             return  Make8Bitd(keys=[img_col])
+        case 'SCrop': 
+            return  SCropd(keys=[img_col,mask_col],label_key=mask_col)
     raise Exception(f"Couldn't fnd a match for argument {names}")
 
 

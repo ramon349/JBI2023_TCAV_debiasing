@@ -47,6 +47,7 @@ class BasicTrainer(object):
         col_info = self.conf['col_info']
         self.img_col  = col_info['img_col']
         self.task_col = col_info['task_col']
+        self.clip_grad = self.trainer_args['grad_norm']
     def compile_model(self):
         pass
 
@@ -125,6 +126,9 @@ class BasicTrainer(object):
             task_h = self.model(img_in.to(self.device)).cpu()
             loss = self.criterions["task"](task_h, task)
             loss.backward()
+            if self.clip_grad: 
+                breakpoint()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(),max_norm=1)
             if (
                 i % grad_step
             ) == 0:  # do an update every two steps instead of every to accum
