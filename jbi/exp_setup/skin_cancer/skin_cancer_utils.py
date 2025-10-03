@@ -67,7 +67,6 @@ def pull_dataset(save_path: str, local_csv_path=None,data_root=None,mask_data_ro
     final_df["three_partition_label_cls"] = final_df["three_partition_label"].map(
         {"non-neoplastic": 0, "malignant": 2, "benign": 1}
     )
-    print(final_df["three_partition_label_cls"].value_counts())
     print(f"Saving dataset file to {save_path}")
     final_df.to_csv(save_path, index=False)
     return final_df
