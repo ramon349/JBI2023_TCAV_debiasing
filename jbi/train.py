@@ -20,7 +20,7 @@ def get_loaders(conf):
             c_trx = tr_transforms
         else:
             c_trx = ts_transforms
-        ds_sub = ds_obj(conf=conf, split=e, transforms=c_trx,debug=conf['debug'])
+        ds_sub = ds_obj(conf=conf, split=e, transforms=c_trx, debug=conf["debug"])
         sampler = None
         shuffle = True
         dl_dict[e] = DataLoader(

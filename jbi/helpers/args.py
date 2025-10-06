@@ -43,7 +43,8 @@ def get_data_choices():
 def get_model_choices():
     return ModelRegister.get_models()
 
-def pass_dict(d_stuff): 
+
+def pass_dict(d_stuff):
     json.loads()
     breakpoint()
     return d_stuff

@@ -16,8 +16,11 @@ from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 from scipy.stats import ttest_ind
 
+
 def gen_key_name(row, metric):
     return f"{row['model']}_all_{metric}_{row['group']}"
+
+
 def define_asterisk(p_val):
     if p_val <= (1e-4):
         return "****"
@@ -29,6 +32,7 @@ def define_asterisk(p_val):
         return "*"
     else:
         return ""
+
 
 def bootstrap_res(all_df, num_classes, seed=42, min_p=50, max_p=75, class_map=None):
     """ """
@@ -66,9 +70,10 @@ def bootstrap_res(all_df, num_classes, seed=42, min_p=50, max_p=75, class_map=No
                 class_results["class"].append(name)
     return pd.DataFrame(class_results)
 
+
 def make_significance_map_classy(raw_boots, ref_mode="Baseline_None_None"):
     ref_map = dict()
-    for sub_n, sub_d in raw_boots.groupby(by=[ "metric", "class"]):
+    for sub_n, sub_d in raw_boots.groupby(by=["metric", "class"]):
         ref_model = sub_d[sub_d["model_name"] == ref_mode].copy()
         metric = sub_n[0]
         group = sub_n[1]
@@ -78,6 +83,7 @@ def make_significance_map_classy(raw_boots, ref_mode="Baseline_None_None"):
             ref_key = f"{name}_{metric}_{group}"
             ref_map[ref_key] = asterisk
     return ref_map
+
 
 def interval_calc(df, cols, rows, num_sigs):
     # cols = ['auc','precision','recall','f1_score']
@@ -97,13 +103,28 @@ def interval_calc(df, cols, rows, num_sigs):
     return pd.DataFrame(new_df)
 
 
-def gen_results(p_df,gt_df,model_name): 
-    class_map = {0:"non-neoplastic", 2:"malignant", 1:"benign"}
-    all_df = pd.merge(gt_df,p_df,left_on='file',right_on='paths')
-    all_df['class'] = all_df['three_partition_label_cls']
-    all_df['max_pred'] = all_df[[e for e in all_df if e.startswith('task_p_')]].values.argmax(axis=1)
-    boot_df = bootstrap_res(all_df,num_classes=3,seed=42,class_map=class_map)
-    boot_df['model_name']=model_name 
-    int_df = interval_calc(boot_df,cols=['auc','precision','recall','f1_score','balanced_acc'],rows=['non-neoplastic','benign','malignant'],num_sigs=3)
-    int_df['model'] = model_name
-    return int_df 
+def gen_results(p_df, gt_df, model_name):
+    all_df = pd.merge(gt_df, p_df, left_on="file", right_on="paths")
+    all_df["class"] = all_df["three_partition_label_cls"]
+    all_df["max_pred"] = all_df[
+        [e for e in all_df if e.startswith("task_p_")]
+    ].values.argmax(axis=1)
+    num_classes = all_df["class"].nunique()
+    if num_classes == 2:
+        class_map = {1: "malignant", 0: "benign"}
+        rows = ["benign", "malignant"]
+    else:
+        class_map = {0: "non-neoplastic", 2: "malignant", 1: "benign"}
+        rows = ["non-neoplastic", "benign", "malignant"]
+    boot_df = bootstrap_res(
+        all_df, num_classes=num_classes, seed=42, class_map=class_map
+    )
+    boot_df["model_name"] = model_name
+    if num_classes > 2:
+        metric_cols = ["auc", "precision", "recall", "f1_score", "balanced_acc"]
+    else:
+        metric_cols = ["auc", "precision", "recall", "f1_score"]
+
+    int_df = interval_calc(boot_df, cols=metric_cols, rows=rows, num_sigs=3)
+    int_df["model"] = model_name
+    return int_df

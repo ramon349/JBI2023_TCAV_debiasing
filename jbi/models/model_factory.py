@@ -39,7 +39,7 @@ def remove_module(w_d):
     new_d = OrderedDict()
     for k, v in w_d.items():
         new_name = k.replace("module.", "")
-        #new_name = k.replace("model.", "")
+        # new_name = k.replace("model.", "")
         new_d[new_name] = v
     return new_d
 

@@ -23,7 +23,9 @@ class AdvTrainer(TwoTaskTrainer):
             enumerate(self.dls["train"]), total=len(self.dls["train"])
         ):
             self.opti.zero_grad()
-            (img_in, task, demo, _) = batch
+            img_in = batch[self.img_col]
+            task = batch[self.task_col]
+            demo = batch[self.demo_col]
             task = task.to(self.device)
             demo = demo.to(self.device)
             # phase 1
@@ -70,39 +72,35 @@ class AdversarialDebiasTCAV(AdvTrainer):
         # get a list of all the parameters
         if ablation_layer:
             found = False
-            for n, e in model.named_modules():
-                if n == ablation_layer:
-                    found = True
-                if not found:
+            names = [n for n, e in model.named_parameters()]
+            idx = self.find_layer(ablation_layer, all_layer_names=names)
+            for i, e in enumerate(model.parameters()):
+                if i < idx:
                     e.requires_grad = False
-                    e.eval()
-                    if isinstance(e, torch.nn.BatchNorm2d):
-                        e.track_running_stats = False
-                else:
-                    e.requires_grad = True
-                    e.train()
-        else:
-            model.train()
 
-    def _set_train_state(self):
-        self._freeze_weights(model=self.model, ablation_layer=self.ablation_layer)
+    def find_layer(self, layer_name, all_layer_names):
+        for i, e in enumerate(all_layer_names):
+            if e.startswith(layer_name):
+                return i
+        raise ValueError(f"{layer_name} was not found")
 
     def train_epoch(self):
-        self._set_train_state()
+        self.model.train()
         grad_step = self.grad_step
         for i, batch in tqdm(
             enumerate(self.dls["train"]), total=len(self.dls["train"])
         ):
             self.opti.zero_grad()
-            (img_in, task, demo, _) = batch
-            task = task.to(self.device)
-            demo = demo.to(self.device)
+            img_in = batch[self.img_col]
+            task = batch[self.task_col].to(self.device)
+            demo = batch[self.demo_col].to(self.device)
             # phase 1
             task_h, demo_h = self.model(img_in.to(self.device), task="phase1")
             task_loss = self.criterions["task"](task_h, task)
             demo_loss = self.criterions["demo"](demo_h, demo)
             loss = task_loss + demo_loss
             loss.backward()
+            self.opti.step()
             # phase2
             task_h, demo_h = self.model(img_in.to(self.device), task="phase2")
             task_loss = self.criterions["task"](task_h, task)
@@ -112,12 +110,10 @@ class AdversarialDebiasTCAV(AdvTrainer):
             else:
                 loss = task_loss
             loss.backward()
-            if (
-                i % grad_step == 0
-            ):  # do an update every two steps instead of every to accum
-                self.opti.step()
+            self.opti.step()
             self._log_scalar("batch_ov_loss", loss, global_step=self.gb_step)
             self._log_scalar("batch_task_loss", task_loss, global_step=self.gb_step)
             self._log_scalar("batch_demo_loss", demo_loss, global_step=self.gb_step)
             self.gb_step += 1
         self.c_epoch += 1
+        self.model.eval()

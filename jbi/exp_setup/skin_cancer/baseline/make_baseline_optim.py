@@ -9,14 +9,24 @@ def _get_base_template() -> dict[str, Any]:
     transform_info = _skin_transform_params()
     template = {
         "csv_path": None,
-        "num_workers": 16,
+        "num_workers": 32,
         "device": ["cuda:0"],
-        "batch_size": 8,
+        "batch_size": 128,
         "dataset": "ImageDataMask",
         "model": "densenet121",
         "trainer": "ErmTrainer",
-        "col_info": {"img_col": "file", "task_col": "three_partition_label_cls",'mask_col':'mask_file'},
-        "trainer_args": {"epochs": 30, "grad_step": 4, "learn_rate": 0.01},
+        "col_info": {
+            "img_col": "file",
+            "task_col": "three_partition_label_cls",
+            "mask_col": "mask_file",
+        },
+        "trainer_args": {
+            "epochs": 100,
+            "grad_step": 1,
+            "learn_rate": 0.001,
+            "early_stop": 20,
+            "grad_norm": 0,
+        },
         "model_parameters": {"num_task": 3},
         "splits": ["train", "test", "val"],
     }

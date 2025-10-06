@@ -31,8 +31,8 @@ class ParamSweeper:
                 search_space = {"lambda": [0, 0.25, 0.5, 0.75, 1.0]}
             case "ErmTrainer":
                 search_space = {
-                    "learn_rate": [0.01, 0.005, 0.001],
-                    "batch_size": [8, 16, 32, 64],
+                    "learn_rate": [0.01, 0.0001, 0.001],
+                    "batch_size": [64, 128, 256],
                 }
             case _:
                 search_space = None
