@@ -139,7 +139,7 @@ class AdversarialDebiasTCAV(AdvTrainer):
                 print("Going to do early breaking. 5 Epochs No Progress")
                 break
         return val_loss
-    def val_epoch(self,is_optim):
+    def val_epoch(self,is_optim=False):
         self.model.eval()
         task_loss = 0
         demo_loss = 0

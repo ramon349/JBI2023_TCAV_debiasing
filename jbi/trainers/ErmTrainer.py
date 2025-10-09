@@ -24,7 +24,7 @@ class BasicTrainer(object):
         model: nn.Module,
         tb_writter: SummaryWriter,
         conf: Dict,
-        data_loaders: Dict,
+        data_loaders: Dict,mode='train'
     ) -> None:
         self.model = model
         self.tb: SummaryWriter = tb_writter
@@ -36,7 +36,8 @@ class BasicTrainer(object):
         self.c_epoch = 0
         self.device = device
         self.gb_step = 0
-        self.init_optims()
+        if mode=='train':
+            self.init_optims()
         self.best_tr_loss = 100
         self.save_interval = 1500
         self.build_criteria()
@@ -96,6 +97,7 @@ class BasicTrainer(object):
         w_path = os.path.join(model_dir, "model_w.ckpt")
         model_w = torch.load(w_path, map_location=self.device)
         self.model.load_state_dict(model_w["model_weights"])
+        print(f"Loading the model weights")
 
     def init_optims(self):
         learn_rate = self.trainer_args["learn_rate"]
@@ -178,7 +180,7 @@ class BasicTrainer(object):
                 task = batch[self.task_col]
                 img_path = batch[f"{self.img_col}_meta_dict"]["filename_or_obj"]
                 task_h = self.model(img_in.to(self.device)).cpu()
-
+                print(task_h)
                 truth_names = ["task_t"]
                 truth_vals = [task]
                 pred_names = ["task_p"]
