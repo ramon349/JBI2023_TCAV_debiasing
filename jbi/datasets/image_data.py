@@ -71,3 +71,23 @@ def skinLesionTwoMask(transforms=None, split=None, conf=None, debug=False):
     if debug:
         data_seq = data_seq[0:200]
     return monaiDataset(data=data_seq, transform=transforms)
+
+@DatasetRegister.register(cls_name='single')
+class SingleSkin(Dataset):
+    def __init__(self,data,transforms=None,conf=None,debug=False):
+        super().__init__()
+        col_info = conf["col_info"]
+        self.task_col = col_info["task_col"]
+        self.demo_col = col_info["demo_col"]
+        self.img_col = col_info["img_col"]
+        self.mask_col = col_info["mask_col"]
+        data_seq = make_image_d(data, cols=[self.task_col, self.img_col, self.demo_col, self.mask_col])
+        if debug:
+            data_seq = data_seq[0:200]
+        self.dset = monaiDataset(data=data_seq, transform=transforms)
+    def __getitem__(self, index):
+        item_out = self.dset.__getitem__(index)
+        return item_out[self.img_col]
+    def __len__(self): 
+        return len(self.dset)
+

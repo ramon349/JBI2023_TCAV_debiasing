@@ -17,9 +17,9 @@ def _parse_args() -> dict[str, str]:
 def _get_template():
     template = {
         "csv_path": None,
-        "col_info": {"img_col": "file", "task_col": "three_partition_label_cls"},
+        "col_info": {"img_col": "file", "task_col": "three_partition_label_cls","mask_col": "mask_file",'demo_col':'discrete_fitz'},
         "tcav_args": {"samples_per_concept": 20},
-        "model_parameters": {"num_task": 3, "num_demo": 2},
+        "model_parameters": {"num_task": 2, "num_demo": 2},
         "model": "DensenetTwoTask",
         "model_weight": None,
         "log_dir": None,

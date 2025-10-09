@@ -8,7 +8,6 @@ from glob import glob
 from torch.utils.tensorboard.writer import SummaryWriter
 import os
 
-
 def get_loaders(conf):
     batch_size = conf["batch_size"]
     tr_transforms, ts_transforms = gen_transforms(conf)

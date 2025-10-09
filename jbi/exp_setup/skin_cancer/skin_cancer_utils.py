@@ -70,7 +70,7 @@ def pull_dataset(
     ts["split"] = "test"
     final_df = pd.concat([tr, val, ts])
     final_df["three_partition_label_cls"] = final_df["three_partition_label"].map(
-        {"non-neoplastic": 0, "malignant": 2, "benign": 1}
+        {"non-neoplastic": 0, "malignant": 1, "benign": 0}
     )
     print(f"Saving dataset file to {save_path}")
     final_df.to_csv(save_path, index=False)
@@ -106,8 +106,8 @@ def _skin_transform_params() -> dict[str, list[str] | dict[str, list[float]]]:
 
 def main():
     conf = _make_args()
-
-    match conf["mode"]:
+    mode = conf['mode']
+    match mode:
         case "download_fitz":
             pull_dataset(
                 conf["output_csv"],

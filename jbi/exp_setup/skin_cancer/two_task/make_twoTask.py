@@ -19,19 +19,20 @@ def _get_base_template() -> dict[str, Any]:
     transform_info = _skin_transform_params()
     template = {
         "csv_path": None,
-        "num_workers": 16,
+        "num_workers": 32,
         "device": ["cuda:0"],
-        "batch_size": 8,
-        "dataset": "TwoTask",
+        "batch_size": 128,
+        "dataset": "TwoTaskMask",
         "model": "DensenetTwoTask",
         "trainer": "TwoTaskTrainer",
         "col_info": {
             "img_col": "file",
             "task_col": "three_partition_label_cls",
             "demo_col": "discrete_fitz",
+            "mask_col": "mask_file"
         },
-        "trainer_args": {"epochs": 30, "grad_step": 4, "learn_rate": 0.01},
-        "model_parameters": {"num_task": 3, "num_demo": 2},
+        "trainer_args": {"epochs": 100, "grad_step": 1, "learn_rate": 0.001,"early_stop": 20,"grad_norm":0},
+        "model_parameters": {"num_task": 2, "num_demo": 2},
         "splits": ["train", "test", "val"],
     }
     # Add the transform information
@@ -64,11 +65,6 @@ def main():
     # write the bash script to  run the optimization script
     with open(script_path, "w") as f:
         print(f"python3 -m jbi.train --config_path {config_path}", file=f)
-
-
-if __name__ == "__main__":
-    main()
-
 
 if __name__ == "__main__":
     main()

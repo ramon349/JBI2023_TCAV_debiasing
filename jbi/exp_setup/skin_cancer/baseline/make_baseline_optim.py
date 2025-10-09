@@ -27,7 +27,7 @@ def _get_base_template() -> dict[str, Any]:
             "early_stop": 20,
             "grad_norm": 0,
         },
-        "model_parameters": {"num_task": 3},
+        "model_parameters": {"num_task": 2},
         "splits": ["train", "test", "val"],
     }
     # Add the transform information
