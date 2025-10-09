@@ -29,6 +29,8 @@ def _get_adv_template(conf) -> dict[str, Any]:
             "lambda": 0.5,
             "early_stop":20,
             "layer_debias": layer_debias,
+            "grad_norm":0,
+            "adv_delay":0,
         },
         "model_parameters": {"num_task": 2, "num_demo": 2},
         "splits": ["train", "test", "val"],

@@ -27,8 +27,8 @@ class ParamSweeper:
     def start(self):
         train_mode = self.conf["trainer"]
         match train_mode:
-            case "adversarial":
-                search_space = {"lambda": [0, 0.25, 0.5, 0.75, 1.0]}
+            case "TCAVDebias":
+                search_space = {"lambda": [ 0.25, 0.5, 0.75, 1.0]}
             case "ErmTrainer":
                 search_space = {
                     "learn_rate": [0.01, 0.0001, 0.001],

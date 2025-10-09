@@ -54,7 +54,7 @@ class AdvTrainer(TwoTaskTrainer):
         self.c_epoch += 1
 
     @staticmethod
-    def get_trial_suggestions(cls, trial: optuna.Trial, c_conf):
+    def get_trial_suggestions(trial: optuna.Trial, c_conf):
         lmbd = trial.suggest_categorical("lambda", choices=[0, 0.25, 0.5, 0.75, 1.0])
         c_conf["trainer_args"]["lambda"] = lmbd
         return c_conf
@@ -117,3 +117,47 @@ class AdversarialDebiasTCAV(AdvTrainer):
             self.gb_step += 1
         self.c_epoch += 1
         self.model.eval()
+
+    def _fit_optuna(self, trial: optuna.Trial):
+        num_epochs = self.total_epochs
+        best_val_loss = 90000
+        val_loss = best_val_loss
+        best_epoch = -1
+        for i in range(num_epochs):
+            self.train_epoch()
+            self._log_scalar(
+                "learning_rate", self.sch.get_last_lr()[0], global_step=self.c_epoch
+            )
+            val_loss = self.val_epoch(is_optim=True)
+            self.sch.step(val_loss)
+            trial.report(val_loss, i)
+            if val_loss <= best_val_loss:
+                self.store_model()
+                best_val_loss = val_loss
+                best_epoch = i
+            if (i - best_epoch) >= self.early_stop:
+                print("Going to do early breaking. 5 Epochs No Progress")
+                break
+        return val_loss
+    def val_epoch(self,is_optim):
+        self.model.eval()
+        task_loss = 0
+        demo_loss = 0
+        with torch.no_grad():
+            val_len = len(self.dls["val"])
+            for i, batch in enumerate(self.dls["val"]):
+                img_in = batch[self.img_col]
+                task = batch[self.task_col].to(self.device)
+                demo = batch[self.demo_col].to(self.device)
+                task_h, demo_h = self.model(img_in.to(self.device))
+                task_loss += self.criterions["task"](task_h, task).item()
+                demo_loss += self.criterions["demo"](demo_h, demo).item()
+            task_loss /= val_len
+            demo_loss /= val_len
+            self._log_scalar("val_task_loss", task_loss, global_step=self.c_epoch)
+            self._log_scalar("val_demo_loss", demo_loss, global_step=self.c_epoch)
+        if is_optim: 
+            total_loss = task_loss / demo_loss
+        else: 
+            total_loss = task_loss 
+        return total_loss

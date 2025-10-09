@@ -116,6 +116,9 @@ class Densenet121Adv(Densenet121TwoBranch):
     def _reversal_layer(self, x):
         # doing this so we can also have the confusion lsos version be very similar
         return grad_reverse(x)
+    @staticmethod 
+    def get_trial_suggestions(trial,c_conf): 
+        return c_conf
 
 
 @ModelRegister.register("DensenetTwoTaskConf")
