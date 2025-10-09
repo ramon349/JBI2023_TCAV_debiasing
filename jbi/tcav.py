@@ -13,7 +13,9 @@ from torch.utils.data import DataLoader
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-
+import shutil
+torch.manual_seed(42)
+torch.use_deterministic_algorithms(True)
 
 def find_conv_layers(model):
     conv_layers = OrderedDict()
@@ -58,12 +60,18 @@ def get_tcav_scores(cav_interp):
 
 def main():
     conf = get_tcav_args()
-    device = conf["device"][0]
+    cav_save_path= os.path.join(conf["log_dir"], "cav_test")
+    if os.path.isdir(cav_save_path):
+        print("Removing old CAV Test")
+        print("captum pickling issue doesn't allow resets")
+        shutil.rmtree(cav_save_path)
+    device = 'cpu' #conf["device"][0]
     blk_df, whit_df, rem_df = make_gt_groups(conf)
     ds_cls = get_dataset(conf)
     val_transform = gen_test_transforms(conf)
     test_ds = ds_cls(rem_df, transforms=val_transform, conf=conf)
     model = model_loader(conf)
+    model = model.to(device)
     cat = "conv"
     black_c, white_c = make_concepts(
         black_df=blk_df,
@@ -79,7 +87,7 @@ def main():
         layers_interest = find_conv_layers(model)
         layers_interest_names = list(layers_interest.keys())
     names = layers_interest_names[
-        ::10
+        ::5
     ]  # TODO: for viz purpose i cut down on the number of  layers
     zebra_tensors = torch.stack(
         [test_ds.__getitem__(idx).to(device) for idx in range(25)]
@@ -88,7 +96,7 @@ def main():
     mytcav = TCAV(
         model=model,
         layers=names,
-        save_path=os.path.join(conf["log_dir"], "cav_test"),
+        save_path=cav_save_path,
         layer_attr_method=LayerIntegratedGradients(model, None),
     )
     tcav_scores_w_random = mytcav.interpret(
@@ -100,7 +108,14 @@ def main():
         additional_forward_args="demo",
     )
     tcav_scores, layer_names = get_tcav_scores(tcav_scores_w_random)
-    layer_names = [".".join(e.split(".")[-2:]) for e in names]
+    scores_df =  pd.DataFrame({'Layer':layer_names,"Score":tcav_scores})
+    df_save_path = os.path.join(conf['log_dir'],'TCAV_df.csv')
+    scores_df.to_csv(df_save_path,index=False)
+    scores_df = scores_df.sort_values(by='Score',ascending=False)
+    best_row = scores_df.iloc[0]
+    best_layer = best_row['Layer']
+    best_score = best_row['Score']
+    print(f"Best Layer:{best_layer} Best Score:{best_score:0.2f}")
     fig = plt.figure(dpi=300)
     plt.plot(np.hstack(tcav_scores), range(0, len(tcav_scores)))
     plt.barh(range(0, len(tcav_scores)), np.hstack(tcav_scores), align="center")
@@ -119,17 +134,17 @@ def make_gt_groups(conf):
     val_df = val_df[val_df["split"] == "train"]
     val_df = val_df[val_df["fitzpatrick_scale"].isin([1, 6])]
     samples_per_concept = conf["tcav_args"]["samples_per_concept"]
-    concept_test = val_df.sample(300, random_state=1996)
+    concept_test = val_df.sample(300, random_state=42)
     rem_samples = val_df[~val_df["file"].isin(concept_test["file"])]
     black_df = (
         rem_samples[rem_samples["fitzpatrick_scale"].isin([6])]
         .copy()
-        .sample(samples_per_concept)
+        .sample(samples_per_concept,random_state=42)
     )
     white_df = (
         rem_samples[rem_samples["fitzpatrick_scale"].isin([1])]
         .copy()
-        .sample(samples_per_concept)
+        .sample(samples_per_concept,random_state=42)
     )
     # make sure samples are removed from the other dataset
     rem_samples = rem_samples[~rem_samples["file"].isin(black_df["file"].unique())]
