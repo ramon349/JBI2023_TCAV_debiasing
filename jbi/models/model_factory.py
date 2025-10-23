@@ -2,8 +2,7 @@ import torch
 import pdb
 from collections import OrderedDict
 from torch import nn
-from torchvision.models import densenet121, DenseNet121_Weights
-
+from torchvision.models import densenet121, DenseNet121_Weights,vit_b_16 , ViT_B_16_Weights
 
 class ModelRegister:
     __data = {}
@@ -73,6 +72,24 @@ class myDensenet(nn.Module):
     def forward(self, x):
         return self.model(x)
 
+@ModelRegister.register("vit_b_16")
+class myViT(nn.Module):
+    def __init__(self, conf):
+        super().__init__()
+        self.model = vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1)
+        num_classes = conf["num_task"]
+        o_feats = self.model.heads.head.in_features
+        self.model.heads.head = nn.Sequential(
+            nn.Dropout(p=0.2),          
+            nn.Linear(o_feats, num_classes)
+        )
+ 
+    @staticmethod
+    def get_trial_suggestions(trial_obj, model_params):
+        return model_params
+ 
+    def forward(self, x):
+        return self.model(x)
 
 if __name__ == "__main__":
     print(f"We have {ModelRegister.num_models()} models")
