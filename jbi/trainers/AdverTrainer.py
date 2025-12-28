@@ -12,10 +12,6 @@ class AdvTrainer(TwoTaskTrainer):
         self.lmbd = self.trainer_args["lambda"]
         self.epoch_delay = self.trainer_args["adv_delay"]
 
-    def build_criteria(self):
-        # build the basic criteria. i.e classification ones
-        super().build_criteria()
-
     def train_epoch(self):
         self.model.train()
         grad_step = self.grad_step
@@ -67,6 +63,9 @@ class AdversarialDebiasTCAV(AdvTrainer):
         self._freeze_weights(model, conf["trainer_args"]["layer_debias"])
         super().__init__(model, tb_writter, conf, data_loaders)
 
+    def build_criteria(self,reduction='none'):
+        super().build_criteria(reduction=reduction)
+
     def _freeze_weights(self, model, ablation_layer):
         """Given the name of a weight parameter we freeze all layers until we find it"""
         # get a list of all the parameters
@@ -98,22 +97,21 @@ class AdversarialDebiasTCAV(AdvTrainer):
             task_h, demo_h = self.model(img_in.to(self.device), task="phase1")
             task_loss = self.criterions["task"](task_h, task)
             demo_loss = self.criterions["demo"](demo_h, demo)
-            loss = task_loss + demo_loss
+            loss =(task_loss  + demo_loss).mean()
             loss.backward()
             self.opti.step()
-            # phase2
-            task_h, demo_h = self.model(img_in.to(self.device), task="phase2")
-            task_loss = self.criterions["task"](task_h, task)
-            demo_loss = self.criterions["demo"](demo_h, demo)
             if self.epoch_delay <= self.c_epoch:
+                # phase2
+                task_h, demo_h = self.model(img_in.to(self.device), task="phase2")
+                task_loss = self.criterions["task"](task_h, task)
+                demo_loss = self.criterions["demo"](demo_h, demo)
                 loss = task_loss + self.lmbd * demo_loss
-            else:
-                loss = task_loss
-            loss.backward()
+                loss = loss.mean()
+                loss.backward()
             self.opti.step()
             self._log_scalar("batch_ov_loss", loss, global_step=self.gb_step)
-            self._log_scalar("batch_task_loss", task_loss, global_step=self.gb_step)
-            self._log_scalar("batch_demo_loss", demo_loss, global_step=self.gb_step)
+            self._log_scalar("batch_task_loss", task_loss.mean(), global_step=self.gb_step)
+            self._log_scalar("batch_demo_loss", demo_loss.mean(), global_step=self.gb_step)
             self.gb_step += 1
         self.c_epoch += 1
         self.model.eval()
@@ -150,8 +148,8 @@ class AdversarialDebiasTCAV(AdvTrainer):
                 task = batch[self.task_col].to(self.device)
                 demo = batch[self.demo_col].to(self.device)
                 task_h, demo_h = self.model(img_in.to(self.device))
-                task_loss += self.criterions["task"](task_h, task).item()
-                demo_loss += self.criterions["demo"](demo_h, demo).item()
+                task_loss += self.criterions["task"](task_h, task).mean().item()
+                demo_loss += self.criterions["demo"](demo_h, demo).mean().item()
             task_loss /= val_len
             demo_loss /= val_len
             self._log_scalar("val_task_loss", task_loss, global_step=self.c_epoch)

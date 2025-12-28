@@ -15,6 +15,7 @@ def _parse_args() -> dict[str, str]:
     args.add_argument("--log_dir", required=True, type=str)
     args.add_argument("--optuna_log", required=True, type=str)
     args.add_argument("--adv_layer",required=True,type=str)
+    args.add_argument("--base_weight",required=True,type=str)
     return vars(args.parse_args())
 
 

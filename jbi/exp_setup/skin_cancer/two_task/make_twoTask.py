@@ -12,11 +12,13 @@ def _parse_args() -> dict[str, str]:
     args.add_argument("--config_dir", required=True, type=str)
     args.add_argument("--log_dir", required=True, type=str)
     args.add_argument("--optuna_log", required=True, type=str)
+    args.add_argument("--base_weight",required=True,type=str)
     return vars(args.parse_args())
 
 
-def _get_base_template() -> dict[str, Any]:
+def _get_base_template(conf) -> dict[str, Any]:
     transform_info = _skin_transform_params()
+    base_path = conf['base_weight']
     template = {
         "csv_path": None,
         "num_workers": 32,
@@ -24,7 +26,7 @@ def _get_base_template() -> dict[str, Any]:
         "batch_size": 128,
         "dataset": "TwoTaskMask",
         "model": "DensenetTwoTask",
-        "trainer": "TwoTaskTrainer",
+        "trainer": "TwoTaskTrainerAux",
         "col_info": {
             "img_col": "file",
             "task_col": "three_partition_label_cls",
@@ -32,7 +34,7 @@ def _get_base_template() -> dict[str, Any]:
             "mask_col": "mask_file"
         },
         "trainer_args": {"epochs": 100, "grad_step": 1, "learn_rate": 0.001,"early_stop": 20,"grad_norm":0},
-        "model_parameters": {"num_task": 2, "num_demo": 2},
+        "model_parameters": {"num_task": 2, "num_demo": 3,'base_weight':base_path},
         "splits": ["train", "test", "val"],
     }
     # Add the transform information
@@ -43,7 +45,7 @@ def _get_base_template() -> dict[str, Any]:
 
 def main():
     conf = _parse_args()
-    template = _get_base_template()
+    template = _get_base_template(conf=conf)
     log_dir = Path(conf["log_dir"])
     log_dir.mkdir(parents=True, exist_ok=True)
     config_dir = Path(conf["config_dir"])

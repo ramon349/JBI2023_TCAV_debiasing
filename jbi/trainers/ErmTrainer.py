@@ -242,7 +242,7 @@ class TwoTaskTrainer(BasicTrainer):
         super().__init__(model, tb_writter, conf, data_loaders)
         self.demo_col = self.conf["col_info"]["demo_col"]
 
-    def build_criteria(self):
+    def build_criteria(self,reduction='mean'):
         self.criterions = dict()
         get_task_incidence = ("weight_task" in self.trainer_args) and self.trainer_args[
             "weight_task"
@@ -260,8 +260,8 @@ class TwoTaskTrainer(BasicTrainer):
             demo_weight = torch.tensor(ws, device=self.device, dtype=torch.float)
         else:
             demo_weight = None
-        self.criterions["task"] = nn.CrossEntropyLoss(weight=task_weight)
-        self.criterions["demo"] = nn.CrossEntropyLoss(weight=demo_weight)
+        self.criterions["task"] = nn.CrossEntropyLoss(weight=task_weight,reduction=reduction)
+        self.criterions["demo"] = nn.CrossEntropyLoss(weight=demo_weight,reduction=reduction)
 
     def train_epoch(self):
         self.model.train()
@@ -368,6 +368,7 @@ class TwoTaskTrainerAux(TwoTaskTrainer):
                 names.append(layer_name)
             else:
                 param.requires_grad = False
+        breakpoint()
         self.opti = optim.AdamW(final_params, lr=learn_rate)
         self.sch = optim.lr_scheduler.ReduceLROnPlateau(
             self.opti, mode="min", patience=3

@@ -8,6 +8,7 @@ from typing import Union, Any
 def _get_adv_template(conf) -> dict[str, Any]:
     transform_info = _skin_transform_params()
     layer_debias = conf['adv_layer']
+    base_weight = conf['base_weight']
     template = {
         "csv_path": None,
         "num_workers": 32,
@@ -32,7 +33,7 @@ def _get_adv_template(conf) -> dict[str, Any]:
             "grad_norm":0,
             "adv_delay":0,
         },
-        "model_parameters": {"num_task": 2, "num_demo": 2},
+        "model_parameters": {"num_task": 2, "num_demo":3,'base_weight':base_weight},
         "splits": ["train", "test", "val"],
     }
     # Add the transform information
@@ -48,6 +49,7 @@ def _parse_args() -> dict[str, str]:
     args.add_argument("--optuna_log_dir", required=True, type=str)
     args.add_argument("--base_config",required=True,type=str)
     args.add_argument("--adv_layer",required=True,type=str)
+    args.add_argument("--base_weight",required=True,type=str)
     return vars(args.parse_args())
 
 def copy_params(conf,new_confg): 

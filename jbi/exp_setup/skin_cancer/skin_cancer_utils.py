@@ -28,6 +28,14 @@ def _make_args():
     return vars(args.parse_args())
 
 
+def bin_fitz(x): 
+    x = int(x)
+    if  x <=2: 
+        return 0 
+    if x <=4: 
+        return 1 
+    else: 
+        return 2
 def pull_dataset(
     save_path: str, local_csv_path=None, data_root=None, mask_data_root=None
 ):
@@ -52,8 +60,9 @@ def pull_dataset(
     df["is_file"] = df["file"].map(stat_map)
     df = df[df["is_file"]].copy()
     df = df[df["fitzpatrick_scale"] >= 0]
-    df["discrete_fitz"] = (df["fitzpatrick_scale"] >= 4).astype(int)
-    # df = df[df['three_partition_label'].isin(["malignant","benign"])].copy()
+    df["discrete_fitz"] = (df["fitzpatrick_scale"].map({1:0,2:0,3:1,4:1,5:2,6:2})).astype(int)
+    df['fitz_cat'] =  df['fitzpatrick_scale'].apply(bin_fitz)
+    # [df = df[df['three_partition_label'].isin(["malignant","benign"])].copy()
 
     print(f"Stratiyin by partition label")
     tr, val = train_test_split(
@@ -86,6 +95,7 @@ def _skin_transform_params() -> dict[str, list[str] | dict[str, list[float]]]:
             "scaleIntensity",
             "norm",
             "resize",
+            "flip",
             "rotate",
             "randGaus",
         ],

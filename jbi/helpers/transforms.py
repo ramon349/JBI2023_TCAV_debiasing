@@ -11,6 +11,7 @@ from monai.transforms import (
     Compose,
     EnsureChannelFirstd,
     RandCropByPosNegLabeld,
+    RandFlipd
 )
 from monai.data import PILReader
 from monai.transforms import MapTransform, Transform
@@ -70,13 +71,19 @@ def get_transform(names, main_config):
             shape1 = config["img_shape"][1]
             return ResizeD(keys=keys, spatial_size=[shape0, shape1])
         case "rotate":
-            return RandRotate90D(keys=keys, prob=0.5)
+            return RandRotate90D(keys=keys, prob=0.5,max_k=3)
         case "randGaus":
             return RandGaussianNoiseD(keys=[img_col], mean=0, std=0.1, prob=0.5)
         case "make8Bit":
             return Make8Bitd(keys=[img_col])
+        case "flip": 
+            return  RandFlipd(keys=keys,spatial_axis=[0,1])
         case "SCrop":
-            return SCropd(keys=[img_col, mask_col], label_key=mask_col)
+            if 'do_rand_shift' in config:
+                do_rand_shift = config['do_rand_shift']
+            else: 
+                do_rand_shift = True
+            return SCropd(keys=[img_col, mask_col], label_key=mask_col,do_rand=do_rand_shift)
     raise Exception(f"Couldn't fnd a match for argument {names}")
 
 

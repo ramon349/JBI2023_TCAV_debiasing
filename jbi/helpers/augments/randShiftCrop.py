@@ -24,29 +24,65 @@ import numpy as np
 
 
 class SCrop(Transform):
-    def __init__(self, update_meta=True, do_rand=True):
+    def __init__(self, update_meta=True, do_rand_shift=True,box_only=False,seed=42):
         super().__init__()
         self.update_meta = update_meta
-        self.do_rand = do_rand
+        self.do_rand =do_rand_shift 
+        self.box_only = box_only 
+        self.seed= seed 
+        self.generator = torch.Generator() 
+        self.generator.manual_seed(seed)
+
+
 
     def __call__(self, vol_img, mask_img):
-        if np.random.random() < 0.01:
+        
+        keep_same_prob = torch.rand(size=(1,),generator=self.generator)[0]
+        if self.box_only or (self.do_rand and (keep_same_prob<0.1)):
             return vol_img
         largest_island = get_largest_connected_component_mask(mask_img)
         old_box = generate_spatial_bounding_box(largest_island)
-        new_box = make_new_bounding_box(old_box, mask_img.shape, do_rand=self.do_rand)
+        new_box = self.make_new_bounding_box(old_box, mask_img.shape)
         x_slices = slice(new_box[0][0], new_box[1][0], 1)
         y_slices = slice(new_box[0][1], new_box[1][1], 1)
         new_img = vol_img[:, x_slices, y_slices]
+        print(new_img.shape)
         return new_img
+    def make_new_bounding_box(self,old_box, mask_size):
+        box_center = get_box_center(old_box)
+        box_size = get_box_size(old_box)
+        largest = max(box_size)
+        min_dim = min(mask_size[1:])
+        n_square = int(np.floor(np.sqrt(min_dim)))
+        if n_square > 16:
+            choices = list(range(16, n_square))
+        else:
+            choices = [16]
+        if self.do_rand: 
+            choice = torch.randperm(len(choices),generator=self.generator)[0]
+            selected_square =choices[0]**2 
+        else: 
+            selected_square = choices[0]**2
 
+        new_center = [e + self.rand_shift_val() for e in box_center]
+        shifted_box = gen_alt_box(new_center, selected_square, mask_size[1:])
+        return shifted_box
+
+    def rand_shift_val(self):
+        if self.do_rand:
+            val = torch.randint(low=30,high=50,size=(1,),generator=self.generator)[0]
+            direction = torch.rand(size=(1,),generator=self.generator)[0]
+            direction = -1 if direction< 0.5 else 1
+            return val * direction
+        else:
+            return 0
 
 class SCropd(MapTransform):
     def __init__(
-        self, keys=None, label_key=None, allow_missing_keys=False, update_meta=False
+        self, keys=None, label_key=None, allow_missing_keys=False, update_meta=False,do_rand=True
     ) -> None:
         super().__init__(keys, allow_missing_keys)
-        self.converter = SCrop(update_meta=update_meta)
+        self.converter = SCrop(update_meta=update_meta,do_rand_shift=do_rand)
         self.label_key = label_key
 
     def __call__(self, data):
@@ -70,30 +106,8 @@ def get_box_center(box):
     return (x_center, y_center)
 
 
-def rand_shift_val(do_rand):
-    if do_rand:
-        val = np.random.randint(low=30, high=50)
-        direction = -1 if np.random.rand() < 0.5 else 1
-        return val * direction
-    else:
-        return 0
 
 
-def make_new_bounding_box(old_box, mask_size, do_rand=True):
-    box_center = get_box_center(old_box)
-    box_size = get_box_size(old_box)
-    largest = max(box_size)
-    min_dim = min(mask_size[1:])
-    n_square = int(np.floor(np.sqrt(min_dim)))
-    if n_square > 16:
-        choices = list(range(16, n_square))
-    else:
-        choices = [16]
-    selected_square = np.random.choice(choices) ** 2
-
-    new_center = [e + rand_shift_val(do_rand) for e in box_center]
-    shifted_box = gen_alt_box(new_center, selected_square, mask_size[1:])
-    return shifted_box
 
 
 def gen_alt_box(ref_point, box_size, image_size):

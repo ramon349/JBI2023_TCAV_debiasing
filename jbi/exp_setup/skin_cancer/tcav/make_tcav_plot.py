@@ -19,7 +19,7 @@ def _get_template():
         "csv_path": None,
         "col_info": {"img_col": "file", "task_col": "three_partition_label_cls","mask_col": "mask_file",'demo_col':'discrete_fitz'},
         "tcav_args": {"samples_per_concept": 20},
-        "model_parameters": {"num_task": 2, "num_demo": 2},
+        "model_parameters": {"num_task": 2, "num_demo": 3},
         "model": "DensenetTwoTask",
         "model_weight": None,
         "log_dir": None,
