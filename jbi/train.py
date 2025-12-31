@@ -1,3 +1,5 @@
+import os
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
 from .helpers.args import get_train_args
 from .datasets.data_factory import get_dataset
 from .helpers.transforms import gen_transforms
@@ -6,10 +8,19 @@ from .models.model_factory import model_loader
 from .trainers.trainer_factory import load_trainer
 from glob import glob
 from torch.utils.tensorboard.writer import SummaryWriter
-import os
+import torch 
 
+def set_seeds():
+ 
+    torch.manual_seed(42)
+    torch.cuda.manual_seed_all(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
+
+set_seeds()
 def get_loaders(conf):
-    batch_size = conf["batch_size"]
+    batch_size = conf['trainer_args']["batch_size"]
     tr_transforms, ts_transforms = gen_transforms(conf)
     dl_dict = dict()
     ds_obj = get_dataset(conf)

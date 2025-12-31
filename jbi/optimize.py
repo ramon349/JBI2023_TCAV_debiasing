@@ -1,19 +1,17 @@
-print("Importing Stuff")
-from .train import get_loaders
+import os
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
+from .train import get_loaders,  set_seeds
 from .models.model_factory import model_loader
 from .trainers.trainer_factory import load_trainer
 from .helpers.args import get_optuna_params
 import numpy as np
-import os
 from copy import deepcopy
 
-print("Doing the optuna imports")
 from optuna import samplers
 import optuna
 
-print("Done the optuna imports")
 
-
+set_seeds()
 class ParamSweeper:
     def __init__(self, config) -> None:
         self.conf = config
@@ -32,7 +30,8 @@ class ParamSweeper:
             case "ErmTrainer":
                 search_space = {
                     "learn_rate": [0.01, 0.0001, 0.001],
-                    "batch_size": [64, 128, 256],
+                    "batch_size": [16,32],
+                    #"batch_size": [64, 128, 256], #TODO: Change this data loading to be dependent on task 
                 }
             case _:
                 search_space = None
@@ -74,7 +73,7 @@ class ParamSweeper:
         # model = model_cls(model_params)
         model = model.to(ov_conf["device"][0])
         # reload the dataloader
-        dls = get_loaders(self.conf)
+        dls = get_loaders(ov_conf)
         trainer = trainer_cls(
             model=model, conf=ov_conf, data_loaders=dls, tb_writter=None
         )
