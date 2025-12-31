@@ -19,12 +19,13 @@ def _parse_args() -> dict[str, str]:
 def _get_base_template(conf) -> dict[str, Any]:
     transform_info = get_transforms(conf['task']) 
     data_info =  get_argmuents(conf['task'])
+    task = conf['task']
     base_path = conf['base_weight']
     template = {
         "csv_path": None,
         "num_workers": 32,
         "device": ["cuda:0"],
-        "dataset":data_info['dataset'], 
+        "dataset": 'TwoTaskMask' if task =='skin' else 'TwoTask', 
         "model": "DensenetTwoTask",
         "trainer": "TwoTaskTrainerAux",
         "col_info": {
