@@ -4,7 +4,6 @@ import pandas as pd
 from .data_factory import DatasetRegister
 from monai.data import Dataset as monaiDataset
 
-
 def make_image_d(df, cols: list):
     data_l = list()
     for i, df_row in df.iterrows():
@@ -30,7 +29,7 @@ def make_image_data(transforms=None, split=None, conf=None, debug=False):
 
 
 @DatasetRegister.register("ImageDataMask")
-def make_image_data(transforms=None, split=None, conf=None, debug=False):
+def make_mask_image_data(transforms=None, split=None, conf=None, debug=False):
     data_path = conf["csv_path"]
     data = pd.read_csv(data_path)
     data = data[data["split"] == split]
