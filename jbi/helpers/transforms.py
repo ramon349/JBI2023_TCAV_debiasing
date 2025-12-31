@@ -11,14 +11,27 @@ from monai.transforms import (
     Compose,
     EnsureChannelFirstd,
     RandCropByPosNegLabeld,
-    RandFlipd
+    RandFlipd,
+    RepeatChanneld
 )
-from monai.data import PILReader
+from monai.data import PILReader, PydicomReader 
 from monai.transforms import MapTransform, Transform
 from monai.data.meta_obj import get_track_meta
 from monai.utils import convert_to_tensor
 from .augments.randShiftCrop import SCropd
-
+import pydicom as pyd 
+from pydicom.pixels import apply_voi_lut
+import torch
+from monai.utils import convert_to_dst_type
+def get_img_reader(conf): 
+    reader_name = conf['img_reader'] 
+    match reader_name:
+        case 'png': 
+            return PILReader()
+        case 'dcm': 
+            return  PydicomReader(prune_metadata=True)
+        case _: 
+            raise ValueError("No propoer Image reader name was provided")
 
 def get_transform(names, main_config):
     """Given the name of a transform we build said torch transform. Using params from config as needed
@@ -36,7 +49,8 @@ def get_transform(names, main_config):
         keys = [img_col]
     match names:
         case "load":
-            return LoadImageD(keys=keys, reader=PILReader(), image_only=False)
+            reader_obj = get_img_reader(config)
+            return LoadImageD(keys=keys, reader=reader_obj, image_only=False)
         case "scaleIntensity":
             return ScaleIntensityD(keys=[img_col])
         case "norm":
@@ -78,12 +92,16 @@ def get_transform(names, main_config):
             return Make8Bitd(keys=[img_col])
         case "flip": 
             return  RandFlipd(keys=keys,spatial_axis=[0,1])
+        case "Make3Channel":
+            return  RepeatChanneld(keys=[img_col],repeats=3)
         case "SCrop":
             if 'do_rand_shift' in config:
                 do_rand_shift = config['do_rand_shift']
             else: 
                 do_rand_shift = True
             return SCropd(keys=[img_col, mask_col], label_key=mask_col,do_rand=do_rand_shift)
+        case "ApplyVoi": 
+            return ApplyVoiD(keys=[img_col])
     raise Exception(f"Couldn't fnd a match for argument {names}")
 
 
@@ -254,4 +272,32 @@ class Make8Bitd(MapTransform):
         d = dict(data)
         for key in self.key_iterator(d):
             d[key] = self.converter(d[key])
+        return d
+
+
+class ApplyVoi(Transform):
+    def __init__(self, update_meta=True):
+        super().__init__()
+        self.update_meta = update_meta
+
+    def __call__(self,img,meta_dict):
+        og_file = meta_dict['filename_or_obj'] 
+        old_dcm = pyd.dcmread(og_file,stop_before_pixels=True)
+        out_img = apply_voi_lut(img.numpy(),ds=old_dcm)
+        new_meta = convert_to_dst_type(out_img,img) [0].unsqueeze(0)
+        return new_meta 
+class ApplyVoiD(MapTransform): 
+    def __init__(self, keys, allow_missing_keys = False):
+        super().__init__(keys, allow_missing_keys)
+        self.converter = ApplyVoi(update_meta=False)
+    def __call__(self, data):
+        d = dict(data)
+        for key in self.key_iterator(d):
+            meta_d_name =  f"{key}_meta_dict"
+            try: 
+                d[key] = self.converter(d[key],d[meta_d_name])
+            except  KeyError: 
+                d[key]= d[key]
+            if '00280030' in d[meta_d_name]: 
+                del d[meta_d_name]['00280030']
         return d

@@ -1,0 +1,19 @@
+from .data_factory import DatasetRegister
+from monai.data import Dataset as monaiDataset
+from .image_data import make_image_d
+import pandas as pd 
+
+
+
+@DatasetRegister.register("DCMData")
+def make_dcm_data(transforms,split,conf,debug=False): 
+    data_path = conf["csv_path"]
+    data = pd.read_csv(data_path)
+    data = data[data["split"] == split]
+    col_info = conf["col_info"]
+    task_col = col_info["task_col"]
+    img_col = col_info["img_col"]
+    data_seq = make_image_d(data, cols=[task_col, img_col])
+    if debug:
+        data_seq = data_seq[0:200]
+    return monaiDataset(data=data_seq, transform=transforms)

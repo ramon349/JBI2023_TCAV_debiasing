@@ -139,12 +139,12 @@ class BasicTrainer(object):
             loss = self.criterions["task"](task_h, task)
             loss.backward()
             if self.clip_grad:
-                breakpoint()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
             if (
                 i % grad_step
             ) == 0:  # do an update every two steps instead of every to accum
                 self.opti.step()
+                self.opti.zero_grad()
             self._log_scalar("batch_task_loss", loss, global_step=self.gb_step)
             self.gb_step += 1
         self.c_epoch += 1
@@ -230,7 +230,7 @@ class BasicTrainer(object):
     @classmethod
     def get_trial_suggestions(cls, trial: optuna.Trial, c_conf):
         lr = trial.suggest_categorical("learn_rate", choices=[0.01, 0.0001, 0.001])
-        batch_size = trial.suggest_categorical("batch_size", choices=[64, 128, 256])
+        batch_size = trial.suggest_categorical("batch_size", choices=[16,32,64, 128, 256])
         c_conf["trainer_args"]["learn_rate"] = lr
         c_conf["trainer_args"]["batch_size"] = batch_size
         return c_conf
@@ -368,7 +368,6 @@ class TwoTaskTrainerAux(TwoTaskTrainer):
                 names.append(layer_name)
             else:
                 param.requires_grad = False
-        breakpoint()
         self.opti = optim.AdamW(final_params, lr=learn_rate)
         self.sch = optim.lr_scheduler.ReduceLROnPlateau(
             self.opti, mode="min", patience=3
