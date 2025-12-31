@@ -12,7 +12,6 @@ def _get_base_template(task) -> dict[str, Any]:
         "csv_path": None,
         "num_workers": 32,
         "device": ["cuda:0"],
-        "batch_size": 64,
         "dataset": data_info['dataset'],
         "model": "densenet121",
         "trainer": "ErmTrainer",

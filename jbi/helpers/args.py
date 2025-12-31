@@ -77,7 +77,6 @@ def build_train_args(mode=None):
         type=str,
         required=True,
     )
-    parser.add_argument("--batch_size", required=True, type=int)
     parser.add_argument(
         "--dataset", type=str, required=True, choices=get_data_choices()
     )

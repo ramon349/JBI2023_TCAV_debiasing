@@ -31,14 +31,17 @@ def get_argmuents(task):
             task_d['dataset']='ImageDataMask'
             task_d['num_demo'] = 3
             task_d['img_reader'] = 'png'
+            task_d['use_mask'] = True
         case 'mammo':
             task_d["img_col"]= "mayo_dcm"
             task_d["task_col"]= "density_num"
             task_d["demo_col"] ="age_cat",
+            task_d["mask_col"]= ""
             task_d['num_task'] = 4
             task_d['num_demo'] = 3
             task_d['dataset'] = 'ImageData'
             task_d['img_reader'] = 'dcm'
+            task_d['use_mask'] = False
     return task_d
 
 def get_transforms(task): 
