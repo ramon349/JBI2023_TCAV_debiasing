@@ -80,7 +80,10 @@ class SingleSkin(Dataset):
         self.demo_col = col_info["demo_col"]
         self.img_col = col_info["img_col"]
         self.mask_col = col_info["mask_col"]
-        data_seq = make_image_d(data, cols=[self.task_col, self.img_col, self.demo_col, self.mask_col])
+        cols = [self.task_col,self.img_col,self.demo_col]
+        if self.mask_col: 
+            cols.append(self.mask_col)
+        data_seq = make_image_d(data, cols=cols)
         if debug:
             data_seq = data_seq[0:200]
         self.dset = monaiDataset(data=data_seq, transform=transforms)

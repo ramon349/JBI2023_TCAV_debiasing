@@ -42,6 +42,8 @@ def get_argmuents(task):
             task_d['dataset'] = 'ImageData'
             task_d['img_reader'] = 'dcm'
             task_d['use_mask'] = False
+            task_d['group_a'] =  [0]
+            task_d['group_b'] = [2]
     return task_d
 
 def get_transforms(task): 

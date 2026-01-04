@@ -130,26 +130,31 @@ def main():
 
 def make_gt_groups(conf):
     input_path = conf["csv_path"]
+    tcav_args = conf['tcav_args']
+    split_col = tcav_args['split_col']
+    group_a =  tcav_args['group_a'] 
+    group_b =  tcav_args['group_b'] 
+    img_col = conf['col_info']['img_col']
     val_df = pd.read_csv(input_path)
     val_df = val_df[val_df["split"] == "train"]
-    val_df = val_df[val_df["fitzpatrick_scale"].isin([1, 6])]
+    val_df = val_df[val_df[split_col].isin(group_a + group_b)]
     samples_per_concept = conf["tcav_args"]["samples_per_concept"]
     concept_test = val_df.sample(300, random_state=42)
-    rem_samples = val_df[~val_df["file"].isin(concept_test["file"])]
+    rem_samples = val_df[~val_df[img_col].isin(concept_test[img_col])]
     black_df = (
-        rem_samples[rem_samples["fitzpatrick_scale"].isin([6])]
+        rem_samples[rem_samples[split_col].isin(group_a)]
         .copy()
         .sample(samples_per_concept,random_state=42)
     )
     white_df = (
-        rem_samples[rem_samples["fitzpatrick_scale"].isin([1])]
+        rem_samples[rem_samples[split_col].isin(group_b)]
         .copy()
         .sample(samples_per_concept,random_state=42)
     )
     # make sure samples are removed from the other dataset
-    rem_samples = rem_samples[~rem_samples["file"].isin(black_df["file"].unique())]
-    rem_samples = rem_samples[~rem_samples["file"].isin(white_df["file"].unique())]
-    rem_samples = rem_samples[rem_samples["fitzpatrick_scale"].isin([1])]
+    rem_samples = rem_samples[~rem_samples[img_col].isin(black_df[img_col].unique())]
+    rem_samples = rem_samples[~rem_samples[img_col].isin(white_df[img_col].unique())]
+    rem_samples = rem_samples[rem_samples[split_col].isin(group_b)]
     return black_df, white_df, rem_samples
 
 
