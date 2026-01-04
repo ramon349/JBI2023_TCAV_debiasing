@@ -3,9 +3,9 @@ from argparse import ArgumentParser
 from ..skin_cancer_utils import _skin_transform_params
 from pathlib import Path
 import json
-from .make_adversarial_optim import _get_adv_template
+from .make_adversarial_optim import _get_adv_template, copy_params
 from ...exp_utils import _get_best_params
-
+import torch 
 
 
 def _parse_args() -> dict[str, str]:
@@ -16,6 +16,8 @@ def _parse_args() -> dict[str, str]:
     args.add_argument("--optuna_log", required=True, type=str)
     args.add_argument("--adv_layer",required=True,type=str)
     args.add_argument("--base_weight",required=True,type=str)
+    args.add_argument("--task",required=True,type=str)
+    args.add_argument("--base_config",required=True,type=str)
     return vars(args.parse_args())
 
 
@@ -35,6 +37,7 @@ def main():
     best_params = _get_best_params(conf["optuna_log"])
     print(f"Got Best Params to be")
     print(best_params)
+    copy_params(conf=conf,new_confg=template)
     for k, v in best_params.items():
         template["trainer_args"][k] = v
     # write the config file
@@ -43,6 +46,7 @@ def main():
     # write the bash script to  run the optimization script
     with open(script_path, "w") as f:
         print(f"python3 -m jbi.train --config_path {config_path}", file=f)
+    print(script_path)
 
 if __name__=='__main__':
     main()
