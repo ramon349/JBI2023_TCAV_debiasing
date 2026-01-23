@@ -17,7 +17,6 @@ def main():
     checkpoint = torch.load(ckpt_path)
     conf = checkpoint["conf"]
     conf["mdoel_weight"] = ckpt_path
-    conf["test_transforms"] = ["toTensor", "resize", "norm"]
     dl_dict = get_loaders(conf)
     model = model_loader(conf)
     writer = None
