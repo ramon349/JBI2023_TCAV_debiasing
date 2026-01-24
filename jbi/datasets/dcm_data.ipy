@@ -15,5 +15,5 @@ def make_dcm_data(transforms,split,conf,debug=False):
     img_col = col_info["img_col"]
     data_seq = make_image_d(data, cols=[task_col, img_col])
     if debug:
-        data_seq = data_seq[0:200]
+        data_seq = data_seq[0:20]
     return monaiDataset(data=data_seq, transform=transforms)

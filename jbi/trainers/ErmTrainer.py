@@ -180,7 +180,6 @@ class BasicTrainer(object):
                 task = batch[self.task_col]
                 img_path = batch[f"{self.img_col}_meta_dict"]["filename_or_obj"]
                 task_h = self.model(img_in.to(self.device)).cpu()
-                print(task_h)
                 truth_names = ["task_t"]
                 truth_vals = [task]
                 pred_names = ["task_p"]

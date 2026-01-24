@@ -99,6 +99,21 @@ def build_train_args(mode=None):
             parser.add_argument("--n_trials", type=int, required=True)
     return parser
 
+def build_infer_args(): 
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config_path", required=False, type=open, action=LoadFromFile, help="Path"
+    )
+    parser.add_argument("--csv_path",type=str,required=True)
+    parser.add_argument("--model_weight",type=str,required=True)
+    parser.add_argument("--col_info",type=json.loads,required=True)
+    parser.add_argument("--num_workers",type=int,required=False,default=8)
+    parser.add_argument("--test_transforms",required=True,type=json.loads)
+    parser.add_argument("--transform_conf",type=json.loads,required=True)
+    parser.add_argument("--output_dir",type=str,required=True)
+    parser.add_argument("--debug",action='store_true',required=False,default=False)
+    return parser
+
 
 def build_tcav_args():
     parser = argparse.ArgumentParser(
@@ -154,3 +169,9 @@ def get_tcav_args():
     args = parser.parse_args()
     conf = vars(args)
     return conf
+
+def get_infer_args():
+    parser = build_infer_args()
+    args = parser.parse_args()
+    conf = vars(args)
+    return conf 
