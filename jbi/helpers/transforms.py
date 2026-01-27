@@ -29,7 +29,7 @@ def get_img_reader(conf):
         case 'png': 
             return PILReader()
         case 'dcm': 
-            return  PydicomReader(prune_metadata=True)
+            return  PydicomReader(prune_metadata=True,affine_lps_to_ras=False,swap_ij=False)
         case _: 
             raise ValueError("No propoer Image reader name was provided")
 
