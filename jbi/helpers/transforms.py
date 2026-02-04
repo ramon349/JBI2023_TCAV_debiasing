@@ -52,7 +52,7 @@ def get_transform(names, main_config):
             reader_obj = get_img_reader(config)
             return LoadImageD(keys=keys, reader=reader_obj, image_only=False)
         case "scaleIntensity":
-            return ScaleIntensityD(keys=[img_col])
+            return ScaleIntensityD(keys=[img_col],channel_wise=True) # Added channelwise to be consistent with the torchvisionAPI
         case "norm":
             mu = torch.tensor(config["norm_mu"])
             std = torch.tensor(config["norm_std"])
@@ -87,7 +87,7 @@ def get_transform(names, main_config):
         case "rotate":
             return RandRotate90D(keys=keys, prob=0.5,max_k=3)
         case "randGaus":
-            return RandGaussianNoiseD(keys=[img_col], mean=0, std=0.1, prob=0.5)
+            return RandGaussianNoiseD(keys=[img_col], mean=0, std=0.01, prob=0.5)
         case "make8Bit":
             return Make8Bitd(keys=[img_col])
         case "flip": 
