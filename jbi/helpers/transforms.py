@@ -38,7 +38,7 @@ def get_transform(names, main_config):
         case "load":
             return LoadImageD(keys=keys, reader=PILReader(), image_only=False)
         case "scaleIntensity":
-            return ScaleIntensityD(keys=[img_col])
+            return ScaleIntensityD(keys=[img_col],channel_wise=True)
         case "norm":
             mu = torch.tensor(config["norm_mu"])
             std = torch.tensor(config["norm_std"])
